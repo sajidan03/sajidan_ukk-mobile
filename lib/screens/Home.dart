@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:skillpp_kelas12/models/UserModel.dart';
-import 'package:skillpp_kelas12/services/user_service.dart';
+import 'package:skillpp_kelas12/services/UserService.dart';
+
 
 class HomePage extends StatefulWidget {
   @override
