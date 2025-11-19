@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:skillpp_kelas12/services/UserCreateService.dart';
+import 'package:skillpp_kelas12/services/Register.dart';
 import 'package:skillpp_kelas12/models/User.dart';
 
 class CreateUserScreen extends StatefulWidget {
@@ -30,7 +30,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         password: _passwordController.text,
       );
 
-      final result = await UserCreateService.createUser(user);
+      final result = await Register.createUser(user);
 
       setState(() {
         _isLoading = false;

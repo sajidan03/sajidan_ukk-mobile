@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:skillpp_kelas12/models/User.dart';
 
-class UserCreateService {
+class Register{
   static const String baseUrl = 'http://192.168.130.178:8000/api';
 
   static Future<Map<String, dynamic>> createUser(User user) async {
