@@ -55,7 +55,7 @@ class _LoginState extends State<Login> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => ProductListPage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -346,23 +346,23 @@ class _LoginState extends State<Login> {
                           const SizedBox(height: 8),
 
                           // Forgot Password
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {},
-                              style: TextButton.styleFrom(
-                                foregroundColor: primaryColor,
-                                padding: EdgeInsets.zero,
-                              ),
-                              child: Text(
-                                'Lupa Password?',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ),
-                          ),
+                          // Align(
+                          //   alignment: Alignment.centerRight,
+                          //   child: TextButton(
+                          //     onPressed: () {},
+                          //     style: TextButton.styleFrom(
+                          //       foregroundColor: primaryColor,
+                          //       padding: EdgeInsets.zero,
+                          //     ),
+                          //     child: Text(
+                          //       'Lupa Password?',
+                          //       style: TextStyle(
+                          //         fontWeight: FontWeight.w600,
+                          //         color: primaryColor,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
 
                           const SizedBox(height: 24),
 
@@ -418,6 +418,60 @@ class _LoginState extends State<Login> {
                                     ),
                             ),
                           ),
+                          //
+                          SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _login,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 18,
+                                  horizontal: 24,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                                shadowColor: primaryColor.withOpacity(0.3),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Lanjutkan tanpa akun',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          size: 20,
+                                          color: Colors.white,
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+
                         ],
                       ),
                     ),
