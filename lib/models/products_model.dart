@@ -53,7 +53,9 @@ class Product {
   final Toko toko;
   final List<ProductImage> images;
 
-  // Constructor untuk create/update
+  // Additional properties for CRUD operations
+  int? id; // For update/delete operations
+
   Product({
     required this.idProduk,
     required this.namaProduk,
@@ -65,13 +67,14 @@ class Product {
     required this.tanggalUpload,
     required this.toko,
     required this.images,
+    this.id,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       idProduk: json['id_produk'],
       namaProduk: json['nama_produk'],
-      idKategori: json['id_kategori'],
+      idKategori: json['id_kategori'].toString(),
       namaKategori: json['nama_kategori'],
       harga: json['harga'],
       stok: json['stok'],
@@ -80,39 +83,66 @@ class Product {
       toko: Toko.fromJson(json['toko']),
       images: List<ProductImage>.from(
           json['images'].map((x) => ProductImage.fromJson(x))),
+      id: json['id'] ?? json['id_produk'],
     );
   }
 
-  // Untuk create new product
-  Product.create({
-    required this.idKategori,
-    required this.namaProduk,
-    required this.harga,
-    required this.stok,
-    required this.deskripsi,
-  }) : 
-    idProduk = 0,
-    namaKategori = '',
-    tanggalUpload = '',
-    toko = Toko(nama: '', kontak: ''),
-    images = [];
+  // Convert to JSON for API requests
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      'id_kategori': int.parse(idKategori),
+      'nama_produk': namaProduk,
+      'harga': int.parse(harga),
+      'stok': int.parse(stok),
+      'deskripsi': deskripsi,
+    };
+  }
 
-  // Untuk update product
-  Product.update({
-    required this.idProduk,
-    required this.idKategori,
-    required this.namaProduk,
-    required this.harga,
-    required this.stok,
-    required this.deskripsi,
-  }) : 
-    namaKategori = '',
-    tanggalUpload = '',
-    toko = Toko(nama: '', kontak: ''),
-    images = [];
+  // Create a new product for add operation
+  factory Product.createNew({
+    required int idKategori,
+    required String namaProduk,
+    required int harga,
+    required int stok,
+    required String deskripsi,
+  }) {
+    return Product(
+      idProduk: 0,
+      namaProduk: namaProduk,
+      idKategori: idKategori.toString(),
+      namaKategori: '',
+      harga: harga.toString(),
+      stok: stok.toString(),
+      deskripsi: deskripsi,
+      tanggalUpload: '',
+      toko: Toko(nama: '', kontak: ''),
+      images: [],
+    );
+  }
 
-  // Getter untuk ID (digunakan dalam update/delete)
-  int? get id => idProduk;
+  // Copy with method for editing
+  Product copyWith({
+    int? idKategori,
+    String? namaProduk,
+    int? harga,
+    int? stok,
+    String? deskripsi,
+  }) {
+    return Product(
+      idProduk: idProduk,
+      namaProduk: namaProduk ?? this.namaProduk,
+      idKategori: idKategori?.toString() ?? this.idKategori,
+      namaKategori: namaKategori,
+      harga: harga?.toString() ?? this.harga,
+      stok: stok?.toString() ?? this.stok,
+      deskripsi: deskripsi ?? this.deskripsi,
+      tanggalUpload: tanggalUpload,
+      toko: toko,
+      images: images,
+      id: id ?? idProduk,
+    );
+  }
 
   String get formattedPrice {
     final price = int.tryParse(harga) ?? 0;
@@ -122,27 +152,9 @@ class Product {
         )}';
   }
 
-  // Convert to JSON untuk create/update
-  Map<String, dynamic> toJsonForCreate() {
-    return {
-      'id_kategori': int.parse(idKategori),
-      'nama_produk': namaProduk,
-      'harga': int.parse(harga),
-      'stok': int.parse(stok),
-      'deskripsi': deskripsi,
-    };
-  }
-
-  Map<String, dynamic> toJsonForUpdate() {
-    return {
-      'id': idProduk,
-      'id_kategori': int.parse(idKategori),
-      'nama_produk': namaProduk,
-      'harga': int.parse(harga),
-      'stok': int.parse(stok),
-      'deskripsi': deskripsi,
-    };
-  }
+  int get intHarga => int.tryParse(harga) ?? 0;
+  int get intStok => int.tryParse(stok) ?? 0;
+  int get intIdKategori => int.tryParse(idKategori) ?? 0;
 }
 
 class Toko {
@@ -159,6 +171,13 @@ class Toko {
       nama: json['nama'],
       kontak: json['kontak'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'nama': nama,
+      'kontak': kontak,
+    };
   }
 }
 
@@ -177,22 +196,55 @@ class ProductImage {
       url: json['url'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'url': url,
+    };
+  }
 }
 
-// Model untuk kategori (jika diperlukan)
+class CategoryResponse {
+  final bool success;
+  final String message;
+  final List<Category> data;
+
+  CategoryResponse({
+    required this.success,
+    required this.message,
+    required this.data,
+  });
+
+  factory CategoryResponse.fromJson(Map<String, dynamic> json) {
+    return CategoryResponse(
+      success: json['success'],
+      message: json['message'],
+      data: List<Category>.from(json['data'].map((x) => Category.fromJson(x))),
+    );
+  }
+}
+
 class Category {
   final int id;
-  final String name;
+  final String nama;
 
   Category({
     required this.id,
-    required this.name,
+    required this.nama,
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
-      id: json['id'],
-      name: json['nama_kategori'],
+      id: json['id_kategori'] ?? json['id'],
+      nama: json['nama_kategori'] ?? json['nama'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id_kategori': id,
+      'nama_kategori': nama,
+    };
   }
 }

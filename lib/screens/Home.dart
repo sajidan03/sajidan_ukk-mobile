@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'dart:io';
 import 'package:skillpp_kelas12/models/products_model.dart';
 import 'package:skillpp_kelas12/services/product_service.dart';
+import 'package:skillpp_kelas12/widgets/product_form_dialog.dart';
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({Key? key}) : super(key: key);
@@ -40,6 +43,122 @@ class _ProductListPageState extends State<ProductListPage> {
     });
   }
 
+  void _showAddProductDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ProductFormDialog(
+        onSave: (product, images) async {
+          final result = await ProductService.addProduct(product);
+          
+          if (result['success'] == true) {
+            final productId = result['data']['id'] ?? result['data']['id_produk'];
+            if (images.isNotEmpty && productId != null) {
+              await ProductService.uploadImages(productId, images);
+            }
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Produk berhasil ditambahkan'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              _loadProducts();
+              Navigator.pop(context);
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Gagal menambah produk: ${result['message']}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  void _showEditProductDialog(Product product) {
+    showDialog(
+      context: context,
+      builder: (context) => ProductFormDialog(
+        product: product,
+        onSave: (updatedProduct, images) async {
+          final result = await ProductService.updateProduct(updatedProduct);
+          
+          if (result['success'] == true && images.isNotEmpty) {
+            await ProductService.uploadImages(updatedProduct.id!, images);
+          }
+          
+          if (mounted) {
+            if (result['success'] == true) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Produk berhasil diupdate'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              _loadProducts();
+              Navigator.pop(context);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Gagal update produk: ${result['message']}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(Product product) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Hapus Produk'),
+        content: Text('Yakin ingin menghapus "${product.namaProduk}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final result = await ProductService.deleteProduct(product.id!);
+              
+              if (mounted) {
+                if (result['success'] == true) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Produk berhasil dihapus'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  _loadProducts();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Gagal menghapus produk: ${result['message']}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,9 +171,18 @@ class _ProductListPageState extends State<ProductListPage> {
             icon: Icon(Icons.refresh),
             onPressed: _loadProducts,
           ),
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: _showAddProductDialog,
+          ),
         ],
       ),
       body: _buildBody(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddProductDialog,
+        child: Icon(Icons.add),
+        backgroundColor: Colors.blue,
+      ),
     );
   }
 
@@ -86,8 +214,23 @@ class _ProductListPageState extends State<ProductListPage> {
     }
 
     if (_products.isEmpty) {
-      return const Center(
-        child: Text('Tidak ada produk tersedia.'),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inventory_2, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Tidak ada produk tersedia',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _showAddProductDialog,
+              child: Text('Tambah Produk Pertama'),
+            ),
+          ],
+        ),
       );
     }
 
@@ -95,7 +238,11 @@ class _ProductListPageState extends State<ProductListPage> {
       itemCount: _products.length,
       itemBuilder: (context, index) {
         final product = _products[index];
-        return ProductCard(product: product);
+        return ProductCard(
+          product: product,
+          onEdit: () => _showEditProductDialog(product),
+          onDelete: () => _showDeleteConfirmation(product),
+        );
       },
     );
   }
@@ -103,8 +250,15 @@ class _ProductListPageState extends State<ProductListPage> {
 
 class ProductCard extends StatelessWidget {
   final Product product;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const ProductCard({Key? key, required this.product}) : super(key: key);
+  const ProductCard({
+    Key? key,
+    required this.product,
+    required this.onEdit,
+    required this.onDelete,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -116,9 +270,8 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header dengan nama produk dan kategori
+            // Header dengan nama produk dan action buttons
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
@@ -130,22 +283,54 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    product.namaKategori,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.blue[700],
-                      fontWeight: FontWeight.w500,
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert),
+                  onSelected: (value) {
+                    if (value == 'edit') onEdit();
+                    if (value == 'delete') onDelete();
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 20),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ],
+                      ),
                     ),
-                  ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 20, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Hapus', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
+            ),
+            SizedBox(height: 8),
+            
+            // Kategori
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                product.namaKategori,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue[700],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
             SizedBox(height: 8),
             

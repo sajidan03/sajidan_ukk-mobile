@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:skillpp_kelas12/models/products_model.dart';
@@ -6,7 +5,7 @@ import 'package:skillpp_kelas12/models/products_model.dart';
 class ProductService {
   static const String baseUrl = 'https://learncode.biz.id/api';
 
-  // Get products (existing)
+  // Get products
   static Future<Map<String, dynamic>> getProducts() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/products'));
@@ -32,6 +31,35 @@ class ProductService {
     }
   }
 
+  // Get categories
+  static Future<Map<String, dynamic>> getCategories() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/categories'));
+      
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        print('Categories API Response: $data');
+        
+        final categoryResponse = CategoryResponse.fromJson(data);
+        return {
+          'success': true,
+          'data': categoryResponse,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'HTTP Error: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      print('Categories API Error: $e');
+      return {
+        'success': false,
+        'message': 'Network Error: $e',
+      };
+    }
+  }
+
   // Add new product
   static Future<Map<String, dynamic>> addProduct(Product product) async {
     try {
@@ -40,13 +68,7 @@ class ProductService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: json.encode({
-          'id_kategori': product.idKategori,
-          'nama_produk': product.namaProduk,
-          'harga': product.harga,
-          'stok': product.stok,
-          'deskripsi': product.deskripsi,
-        }),
+        body: json.encode(product.toJson()),
       );
 
       if (response.statusCode == 200) {
@@ -78,14 +100,7 @@ class ProductService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: json.encode({
-          'id': product.id,
-          'id_kategori': product.idKategori,
-          'nama_produk': product.namaProduk,
-          'harga': product.harga,
-          'stok': product.stok,
-          'deskripsi': product.deskripsi,
-        }),
+        body: json.encode(product.toJson()),
       );
 
       if (response.statusCode == 200) {
@@ -141,6 +156,7 @@ class ProductService {
     }
   }
 
+  // Upload product images
   static Future<Map<String, dynamic>> uploadImages(
     int productId, 
     List<String> imagePaths
@@ -151,6 +167,7 @@ class ProductService {
         Uri.parse('$baseUrl/products/images/upload')
       );
 
+      // Add product ID
       request.fields['id_produk'] = productId.toString();
 
       // Add images
