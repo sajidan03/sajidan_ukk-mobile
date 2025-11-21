@@ -53,6 +53,7 @@ class Product {
   final Toko toko;
   final List<ProductImage> images;
 
+  // Constructor untuk create/update
   Product({
     required this.idProduk,
     required this.namaProduk,
@@ -82,12 +83,65 @@ class Product {
     );
   }
 
+  // Untuk create new product
+  Product.create({
+    required this.idKategori,
+    required this.namaProduk,
+    required this.harga,
+    required this.stok,
+    required this.deskripsi,
+  }) : 
+    idProduk = 0,
+    namaKategori = '',
+    tanggalUpload = '',
+    toko = Toko(nama: '', kontak: ''),
+    images = [];
+
+  // Untuk update product
+  Product.update({
+    required this.idProduk,
+    required this.idKategori,
+    required this.namaProduk,
+    required this.harga,
+    required this.stok,
+    required this.deskripsi,
+  }) : 
+    namaKategori = '',
+    tanggalUpload = '',
+    toko = Toko(nama: '', kontak: ''),
+    images = [];
+
+  // Getter untuk ID (digunakan dalam update/delete)
+  int? get id => idProduk;
+
   String get formattedPrice {
     final price = int.tryParse(harga) ?? 0;
     return 'Rp ${price.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]}.',
         )}';
+  }
+
+  // Convert to JSON untuk create/update
+  Map<String, dynamic> toJsonForCreate() {
+    return {
+      'id_kategori': int.parse(idKategori),
+      'nama_produk': namaProduk,
+      'harga': int.parse(harga),
+      'stok': int.parse(stok),
+      'deskripsi': deskripsi,
+    };
+  }
+
+  Map<String, dynamic> toJsonForUpdate() {
+    return {
+      'id': idProduk,
+      'id_kategori': int.parse(idKategori),
+      'nama_produk': namaProduk,
+      'harga': int.parse(harga),
+      'stok': int.parse(stok),
+      'deskripsi': deskripsi,
+    };
   }
 }
 
@@ -121,6 +175,24 @@ class ProductImage {
     return ProductImage(
       id: json['id'],
       url: json['url'],
+    );
+  }
+}
+
+// Model untuk kategori (jika diperlukan)
+class Category {
+  final int id;
+  final String name;
+
+  Category({
+    required this.id,
+    required this.name,
+  });
+
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['id'],
+      name: json['nama_kategori'],
     );
   }
 }
