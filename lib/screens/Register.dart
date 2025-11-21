@@ -1,76 +1,85 @@
 import 'package:flutter/material.dart';
-import 'package:skillpp_kelas12/services/Register.dart';
-import 'package:skillpp_kelas12/models/User.dart';
+import 'package:skillpp_kelas12/models/register_model.dart';
+import 'package:skillpp_kelas12/screens/Login.dart';
+import 'package:skillpp_kelas12/services/register_service.dart';
 
-class CreateUserScreen extends StatefulWidget {
-  const CreateUserScreen({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({Key? key}) : super(key: key);
 
   @override
-  State<CreateUserScreen> createState() => _CreateUserScreenState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _CreateUserScreenState extends State<CreateUserScreen> {
+class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final RegisterService _registerService = RegisterService();
+
+  final TextEditingController _namaController = TextEditingController();
+  final TextEditingController _kontakController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   bool _isLoading = false;
-
-  void _createUser() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      final user = User(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        username: _usernameController.text.trim(),
-        password: _passwordController.text,
-      );
-
-      final result = await Register.createUser(user);
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (!mounted) return;
-
-      // Tampilkan hasil
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ?? ''),
-          backgroundColor: result['success'] == true
-              ? Colors.green
-              : Colors.red,
-        ),
-      );
-
-      if (result['success'] == true) {
-        // Reset form jika berhasil
-        _formKey.currentState!.reset();
-
-        // Navigasi atau lakukan action lainnya
-        // Navigator.pop(context);
-      }
-    }
-  }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
+    _namaController.dispose();
+    _kontakController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  Future<void> _register() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final user = RegisterModel(
+        nama: _namaController.text,
+        kontak: _kontakController.text,
+        username: _usernameController.text,
+        password: _passwordController.text,
+      );
+
+      final result = await _registerService.register(user);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (result.success) {
+        _showSnackBar('Registrasi berhasil!', Colors.green);
+        
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => Login()),
+            (route) => false, // Hapus semua halaman sebelumnya
+          );
+        });
+      } else {
+        _showSnackBar('Registrasi gagal: ${result.message}', Colors.red);
+      }
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Buat User Baru')),
+      appBar: AppBar(
+        title: const Text('Register'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -78,8 +87,12 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
           child: Column(
             children: [
               TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nama'),
+                controller: _namaController,
+                decoration: const InputDecoration(
+                  labelText: 'Nama',
+                  hintText: 'Masukkan nama lengkap',
+                  border: OutlineInputBorder(),
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Nama harus diisi';
@@ -87,25 +100,30 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
+                controller: _kontakController,
+                decoration: const InputDecoration(
+                  labelText: 'Kontak',
+                  hintText: 'Masukkan nomor telepon',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Email harus diisi';
-                  }
-                  if (!RegExp(
-                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  ).hasMatch(value)) {
-                    return 'Format email tidak valid';
+                    return 'Kontak harus diisi';
                   }
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _usernameController,
-                decoration: const InputDecoration(labelText: 'Username'),
+                decoration: const InputDecoration(
+                  labelText: 'Username',
+                  hintText: 'Masukkan username',
+                  border: OutlineInputBorder(),
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Username harus diisi';
@@ -113,9 +131,14 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  hintText: 'Masukkan password',
+                  border: OutlineInputBorder(),
+                ),
                 obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -127,13 +150,19 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _createUser,
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('Buat User'),
-              ),
+              const SizedBox(height: 24),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _register,
+                        child: const Text(
+                          'Register',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
             ],
           ),
         ),

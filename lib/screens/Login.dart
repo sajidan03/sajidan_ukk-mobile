@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:skillpp_kelas12/models/LoginModel.dart';
+import 'package:skillpp_kelas12/models/login_model.dart';
 import 'package:skillpp_kelas12/screens/Home.dart';
-import '../services/LoginService.dart';
+import 'package:skillpp_kelas12/screens/register.dart';
+import '../services/login_service.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -491,8 +492,13 @@ class _LoginState extends State<Login> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        TextButton(
-                          onPressed: () {},
+                       TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => RegisterPage()),
+                            );
+                          },
                           style: TextButton.styleFrom(
                             foregroundColor: primaryColor,
                           ),

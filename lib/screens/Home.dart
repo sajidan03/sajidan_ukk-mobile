@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:skillpp_kelas12/models/ProductsModel.dart';
-import 'package:skillpp_kelas12/services/ProductService.dart';
+import 'package:skillpp_kelas12/models/products_model.dart';
+import 'package:skillpp_kelas12/services/product_service.dart';
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({Key? key}) : super(key: key);

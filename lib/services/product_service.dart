@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:skillpp_kelas12/models/ProductsModel.dart';
+import 'package:skillpp_kelas12/models/products_model.dart';
 
 class ProductService {
   static const String URL = 'http://learncode.biz.id/api';

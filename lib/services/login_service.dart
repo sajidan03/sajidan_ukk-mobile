@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:skillpp_kelas12/models/LoginModel.dart';
+import 'package:skillpp_kelas12/models/login_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
