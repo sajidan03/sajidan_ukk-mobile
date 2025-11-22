@@ -82,7 +82,7 @@ class StoreService {
       print('Update Store Request: $requestBody');
 
       final response = await http.post(
-        Uri.parse('$baseUrl/stores/save'), // Adjust endpoint if different
+        Uri.parse('$baseUrl/stores/save'), 
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

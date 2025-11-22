@@ -307,4 +307,67 @@ class ProductService {
       };
     }
   }
+  
+  // Get product detail by ID dengan token - endpoint yang benar
+static Future<Map<String, dynamic>> getProductDetail(int productId) async {
+  try {
+    final String? token = await LoginService.getToken();
+    
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    print('Fetching product detail for ID: $productId');
+    print('Endpoint: $baseUrl/products/$productId/show');
+    
+    final response = await http.get(
+      Uri.parse('$baseUrl/products/$productId/show'), // Endpoint yang benar
+      headers: headers,
+    );
+
+    print('Product Detail Status: ${response.statusCode}');
+    print('Product Detail Response: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      if (data['success'] == true) {
+        final productDetailResponse = ProductDetailResponse.fromJson(data);
+        return {
+          'success': true,
+          'data': productDetailResponse,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Produk tidak ditemukan',
+        };
+      }
+    } else if (response.statusCode == 404) {
+      return {
+        'success': false,
+        'message': 'Produk tidak ditemukan (404)',
+      };
+    } else if (response.statusCode == 401) {
+      return {
+        'success': false,
+        'message': 'Token tidak valid. Silakan login kembali.',
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'HTTP Error: ${response.statusCode} - ${response.body}',
+      };
+    }
+  } catch (e) {
+    print('Product Detail Error: $e');
+    return {
+      'success': false,
+      'message': 'Network Error: $e',
+    };
+  }
+}
 }

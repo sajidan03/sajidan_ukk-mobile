@@ -204,7 +204,25 @@ class ProductImage {
     };
   }
 }
+class ProductDetailResponse {
+  final bool success;
+  final String message;
+  final Product data;
 
+  ProductDetailResponse({
+    required this.success,
+    required this.message,
+    required this.data,
+  });
+
+  factory ProductDetailResponse.fromJson(Map<String, dynamic> json) {
+    return ProductDetailResponse(
+      success: json['success'],
+      message: json['message'],
+      data: Product.fromJson(json['data']),
+    );
+  }
+}
 class CategoryResponse {
   final bool success;
   final String message;
@@ -247,4 +265,5 @@ class Category {
       'nama_kategori': nama,
     };
   }
+  
 }

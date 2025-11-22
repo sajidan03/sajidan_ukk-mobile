@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:skillpp_kelas12/models/products_model.dart';
+import 'package:skillpp_kelas12/screens/detail_produk.dart';
 import 'package:skillpp_kelas12/screens/profil.dart';
 import 'package:skillpp_kelas12/screens/store.dart';
 import 'package:skillpp_kelas12/services/product_service.dart';
@@ -324,6 +325,15 @@ class _ProductListPageState extends State<ProductListPage> {
           product: product,
           onEdit: () => _showEditProductDialog(product),
           onDelete: () => _showDeleteConfirmation(product),
+          onTap: () {
+            // Navigasi ke halaman detail produk
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProductDetailPage(productId: product.idProduk),
+              ),
+            );
+          },
         );
       },
     );
@@ -334,12 +344,14 @@ class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onTap;
 
   const ProductCard({
     Key? key,
     required this.product,
     required this.onEdit,
     required this.onDelete,
+    required this.onTap,
   }) : super(key: key);
 
   @override
@@ -347,134 +359,103 @@ class ProductCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.all(8),
       elevation: 2,
-      child: Padding(
-        padding: EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header dengan nama produk dan action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    product.namaProduk,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert),
-                  onSelected: (value) {
-                    if (value == 'edit') onEdit();
-                    if (value == 'delete') onDelete();
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit, size: 20),
-                          SizedBox(width: 8),
-                          Text('Edit'),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, size: 20, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Hapus', style: TextStyle(color: Colors.red)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            
-            // Kategori
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                product.namaKategori,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue[700],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            SizedBox(height: 8),
-            
-            // Harga dan Stok
-            Row(
-              children: [
-                Text(
-                  product.formattedPrice,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
-                  ),
-                ),
-                SizedBox(width: 16),
-                Text(
-                  'Stok: ${product.stok}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            
-            // Deskripsi
-            Text(
-              product.deskripsi,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            SizedBox(height: 8),
-            
-            // Info Toko
-            Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header dengan nama produk dan action buttons
+              Row(
                 children: [
-                  Icon(Icons.store, size: 16, color: Colors.grey[600]),
-                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      product.toko.nama,
+                      product.namaProduk,
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Icon(Icons.phone, size: 16, color: Colors.grey[600]),
-                  SizedBox(width: 4),
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert),
+                    onSelected: (value) {
+                      if (value == 'detail') onTap();
+                      if (value == 'edit') onEdit();
+                      if (value == 'delete') onDelete();
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'detail',
+                        child: Row(
+                          children: [
+                            Icon(Icons.visibility, size: 20),
+                            SizedBox(width: 8),
+                            Text('Detail'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, size: 20),
+                            SizedBox(width: 8),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, size: 20, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Hapus', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              
+              // Kategori
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  product.namaKategori,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              SizedBox(height: 8),
+              
+              // Harga dan Stok
+              Row(
+                children: [
                   Text(
-                    product.toko.kontak,
+                    product.formattedPrice,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Text(
+                    'Stok: ${product.stok}',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
@@ -482,24 +463,70 @@ class ProductCard extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: 8),
-            
-            // Gambar Produk
-            _buildProductImages(),
-            
-            // Tanggal Upload
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                'Upload: ${product.tanggalUpload}',
+              SizedBox(height: 8),
+              
+              // Deskripsi
+              Text(
+                product.deskripsi,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 8),
+              
+              // Info Toko
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.store, size: 16, color: Colors.grey[600]),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        product.toko.nama,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.phone, size: 16, color: Colors.grey[600]),
+                    SizedBox(width: 4),
+                    Text(
+                      product.toko.kontak,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              SizedBox(height: 8),
+              
+              // Gambar Produk
+              _buildProductImages(),
+              
+              // Tanggal Upload
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'Upload: ${product.tanggalUpload}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
