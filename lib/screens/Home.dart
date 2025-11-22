@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:skillpp_kelas12/models/products_model.dart';
 import 'package:skillpp_kelas12/screens/profil.dart';
+import 'package:skillpp_kelas12/screens/store.dart';
 import 'package:skillpp_kelas12/services/product_service.dart';
 import 'package:skillpp_kelas12/widgets/product_form_dialog.dart';
 
@@ -50,8 +51,17 @@ class _ProductListPageState extends State<ProductListPage> {
         onSave: (product, images) async {
           final result = await ProductService.addProduct(product);
           
+          print('Add Product Result: $result');
+          
           if (result['success'] == true) {
-            final productId = result['data']['id'] ?? result['data']['id_produk'];
+            // Handle product ID - bisa dari berbagai kemungkinan field
+            final productId = result['data']['id'] ?? 
+                             result['data']['id_produk'] ?? 
+                             result['data']['data']['id'] ??
+                             result['data']['data']['id_produk'];
+            
+            print('Product ID from response: $productId');
+            
             if (images.isNotEmpty && productId != null) {
               await ProductService.uploadImages(productId, images);
             }
@@ -59,7 +69,7 @@ class _ProductListPageState extends State<ProductListPage> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Produk berhasil ditambahkan'),
+                  content: Text(result['message'] ?? 'Produk berhasil ditambahkan'),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -87,26 +97,49 @@ class _ProductListPageState extends State<ProductListPage> {
       builder: (context) => ProductFormDialog(
         product: product,
         onSave: (updatedProduct, images) async {
-          final result = await ProductService.updateProduct(updatedProduct);
-          
-          if (result['success'] == true && images.isNotEmpty) {
-            await ProductService.uploadImages(updatedProduct.id!, images);
-          }
-          
-          if (mounted) {
+          try {
+            print('Starting update process...');
+            print('Updated product data: ${updatedProduct.toJson()}');
+            
+            final result = await ProductService.updateProduct(updatedProduct);
+            
+            print('Update result: $result');
+            
             if (result['success'] == true) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Produk berhasil diupdate'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-              _loadProducts();
-              Navigator.pop(context);
+              // Upload gambar jika ada gambar baru
+              if (images.isNotEmpty) {
+                final productId = result['data']['id'] ?? updatedProduct.id ?? updatedProduct.idProduk;
+                if (productId != null) {
+                  await ProductService.uploadImages(productId, images);
+                }
+              }
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Produk berhasil diupdate'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                _loadProducts();
+                Navigator.pop(context);
+              }
             } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal update produk: ${result['message']}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          } catch (e) {
+            print('Error in edit dialog: $e');
+            if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Gagal update produk: ${result['message']}'),
+                  content: Text('Error: $e'),
                   backgroundColor: Colors.red,
                 ),
               );
@@ -165,14 +198,16 @@ class _ProductListPageState extends State<ProductListPage> {
       _currentIndex = index;
     });
     
-    // Tambahkan logika navigasi untuk masing-masing tab di sini
     switch (index) {
       case 0: // Beranda
         // Sudah di halaman beranda, tidak perlu navigasi
         break;
       case 1: // Toko Saya
-        // Bisa menambahkan navigasi ke halaman toko saya
-        // Navigator.push(context, MaterialPageRoute(builder: (context) => MyStorePage()));
+        // Navigasi ke halaman toko saya
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => StorePage()),
+        );
         break;
       case 2: // Profil
         // Navigasi ke halaman profil

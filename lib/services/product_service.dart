@@ -1,14 +1,29 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:skillpp_kelas12/models/products_model.dart';
+import 'package:skillpp_kelas12/services/login_service.dart';
 
 class ProductService {
   static const String baseUrl = 'https://learncode.biz.id/api';
 
-  // Get products
+  // Get products dengan token
   static Future<Map<String, dynamic>> getProducts() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/products'));
+      final String? token = await LoginService.getToken();
+      
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Tambahkan token jika ada
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/products'),
+        headers: headers,
+      );
       
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -31,10 +46,23 @@ class ProductService {
     }
   }
 
-  // Get categories
+  // Get categories dengan token
   static Future<Map<String, dynamic>> getCategories() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/categories'));
+      final String? token = await LoginService.getToken();
+      
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/categories'),
+        headers: headers,
+      );
       
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -60,14 +88,22 @@ class ProductService {
     }
   }
 
-  // Add new product
+  // Add new product dengan token
   static Future<Map<String, dynamic>> addProduct(Product product) async {
     try {
+      final String? token = await LoginService.getToken();
+      
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       final response = await http.post(
         Uri.parse('$baseUrl/products/save'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: json.encode(product.toJson()),
       );
 
@@ -92,14 +128,22 @@ class ProductService {
     }
   }
 
-  // Update product - menggunakan endpoint yang sama dengan add
+  // Update product dengan token
   static Future<Map<String, dynamic>> updateProduct(Product product) async {
     try {
+      final String? token = await LoginService.getToken();
+      
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       final response = await http.post(
-        Uri.parse('$baseUrl/products/save'), // Menggunakan endpoint yang sama
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        Uri.parse('$baseUrl/products/save'),
+        headers: headers,
         body: json.encode(product.toJson()),
       );
 
@@ -124,14 +168,22 @@ class ProductService {
     }
   }
 
-  // Delete product
+  // Delete product dengan token
   static Future<Map<String, dynamic>> deleteProduct(int productId) async {
     try {
+      final String? token = await LoginService.getToken();
+      
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       final response = await http.post(
         Uri.parse('$baseUrl/products/delete'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: json.encode({
           'id': productId,
         }),
@@ -157,16 +209,24 @@ class ProductService {
     }
   }
 
-  // Upload product images
+  // Upload product images dengan token
   static Future<Map<String, dynamic>> uploadImages(
     int productId, 
     List<String> imagePaths
   ) async {
     try {
+      final String? token = await LoginService.getToken();
+      
       var request = http.MultipartRequest(
         'POST', 
         Uri.parse('$baseUrl/products/images/upload')
       );
+
+      // Add headers dengan token
+      request.headers['Content-Type'] = 'multipart/form-data';
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
 
       // Add product ID
       request.fields['id_produk'] = productId.toString();
@@ -202,11 +262,22 @@ class ProductService {
     }
   }
 
-  // Get single product by ID
+  // Get single product by ID dengan token
   static Future<Map<String, dynamic>> getProductById(int productId) async {
     try {
+      final String? token = await LoginService.getToken();
+      
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       final response = await http.get(
         Uri.parse('$baseUrl/products/$productId'),
+        headers: headers,
       );
 
       if (response.statusCode == 200) {

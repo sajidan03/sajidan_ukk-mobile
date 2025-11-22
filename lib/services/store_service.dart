@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:skillpp_kelas12/models/profil_model.dart';
+import 'package:skillpp_kelas12/models/store_model.dart';
 import 'package:skillpp_kelas12/services/login_service.dart';
 
-class ProfileService {
+class StoreService {
   static const String baseUrl = 'https://learncode.biz.id/api';
 
-  // Get profile dengan token
-  static Future<Map<String, dynamic>> getProfile() async {
+  static Future<Map<String, dynamic>> getStore() async {
     try {
       final String? token = await LoginService.getToken();
       
@@ -19,22 +18,22 @@ class ProfileService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/profile'),
+        Uri.parse('$baseUrl/stores'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
       );
       
-      print('Profile API Status: ${response.statusCode}');
-      print('Profile API Response: ${response.body}');
+      print('Store API Status: ${response.statusCode}');
+      print('Store API Response: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
-        final profileResponse = ProfileResponse.fromJson(data);
+        final storeResponse = StoreResponse.fromJson(data);
         return {
           'success': true,
-          'data': profileResponse,
+          'data': storeResponse,
         };
       } else if (response.statusCode == 401) {
         return {
@@ -48,7 +47,7 @@ class ProfileService {
         };
       }
     } catch (e) {
-      print('Profile API Error: $e');
+      print('Store API Error: $e');
       return {
         'success': false,
         'message': 'Network Error: $e',
@@ -56,12 +55,12 @@ class ProfileService {
     }
   }
 
-  // Update profile dengan token
-  static Future<Map<String, dynamic>> updateProfile({
-    required String nama,
-    required String kontak,
-    required String username,
-    String? password, // password optional
+  // Update store data
+  static Future<Map<String, dynamic>> updateStore({
+    required String namaToko,
+    required String deskripsi,
+    required String kontakToko,
+    required String alamat,
   }) async {
     try {
       final String? token = await LoginService.getToken();
@@ -73,22 +72,17 @@ class ProfileService {
         };
       }
 
-      // Prepare request body
-      Map<String, dynamic> requestBody = {
-        'nama': nama,
-        'kontak': kontak,
-        'username': username,
+      final Map<String, dynamic> requestBody = {
+        'nama_toko': namaToko,
+        'deskripsi': deskripsi,
+        'kontak_toko': kontakToko,
+        'alamat': alamat,
       };
 
-      // Tambahkan password hanya jika diisi
-      if (password != null && password.isNotEmpty) {
-        requestBody['password'] = password;
-      }
-
-      print('Update Profile Request: $requestBody');
+      print('Update Store Request: $requestBody');
 
       final response = await http.post(
-        Uri.parse('$baseUrl/profile/update'),
+        Uri.parse('$baseUrl/stores/save'), // Adjust endpoint if different
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -96,14 +90,14 @@ class ProfileService {
         body: json.encode(requestBody),
       );
 
-      print('Update Profile Status: ${response.statusCode}');
-      print('Update Profile Response: ${response.body}');
+      print('Update Store Status: ${response.statusCode}');
+      print('Update Store Response: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         return {
           'success': data['success'] ?? true,
-          'message': data['message'] ?? 'Profil berhasil diupdate',
+          'message': data['message'] ?? 'Toko berhasil diupdate',
           'data': data['data'] ?? data,
         };
       } else if (response.statusCode == 401) {
@@ -118,7 +112,7 @@ class ProfileService {
         };
       }
     } catch (e) {
-      print('Update Profile Error: $e');
+      print('Update Store Error: $e');
       return {
         'success': false,
         'message': 'Network Error: $e',

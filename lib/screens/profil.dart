@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:skillpp_kelas12/models/profil_model.dart';
+import 'package:skillpp_kelas12/screens/login.dart';
 import 'package:skillpp_kelas12/services/profil_service.dart';
+import 'package:skillpp_kelas12/widgets/edit_profil_dialog.dart';
+import 'package:skillpp_kelas12/services/login_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -38,6 +41,79 @@ class _ProfilePageState extends State<ProfilePage> {
         _errorMessage = result['message'] ?? 'Terjadi kesalahan';
       }
     });
+  }
+
+  void _showEditProfileDialog() {
+    if (_profile == null) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => EditProfileDialog(
+        profile: _profile!,
+        onProfileUpdated: _loadProfile,
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Ubah Password'),
+        content: Text('Gunakan fitur Edit Profil untuk mengubah password.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Konfirmasi Keluar'),
+        content: Text('Apakah Anda yakin ingin keluar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _logout();
+            },
+            child: Text(
+              'Keluar',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _logout() async {
+    // Panggil logout service untuk clear token
+    await LoginService.logout();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Berhasil keluar'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    
+    // Navigasi ke halaman login
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => Login()), // Ganti dengan halaman login Anda
+      (route) => false,
+    );
   }
 
   @override
@@ -114,6 +190,13 @@ class _ProfilePageState extends State<ProfilePage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.blue[100],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
             child: Icon(
               Icons.person,
@@ -123,23 +206,39 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           SizedBox(height: 20),
 
+          // Role badge
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: _getRoleColor(_profile!.role),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              _profile!.role.toUpperCase(),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+
           // Card informasi profil
           Card(
             elevation: 4,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Padding(
               padding: EdgeInsets.all(20),
               child: Column(
                 children: [
-                  _buildProfileItem('Nama', _profile!.nama, Icons.person),
+                  _buildProfileItem('Nama Lengkap', _profile!.nama, Icons.person),
                   _buildDivider(),
                   _buildProfileItem('Username', _profile!.username, Icons.alternate_email),
                   _buildDivider(),
                   _buildProfileItem('Kontak', _profile!.kontak, Icons.phone),
-                  _buildDivider(),
-                  _buildProfileItem('Role', _profile!.role, Icons.verified_user),
                   _buildDivider(),
                   _buildProfileItem('Bergabung', _profile!.formattedDate, Icons.calendar_today),
                 ],
@@ -152,8 +251,9 @@ class _ProfilePageState extends State<ProfilePage> {
           Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: Colors.grey[50],
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -180,29 +280,21 @@ class _ProfilePageState extends State<ProfilePage> {
                 'Edit Profil',
                 Icons.edit,
                 Colors.blue,
-                () {
-                  // Navigasi ke halaman edit profil
-                  _showEditProfileDialog();
-                },
+                _showEditProfileDialog,
               ),
               SizedBox(height: 12),
               _buildActionButton(
                 'Ubah Password',
                 Icons.lock,
                 Colors.orange,
-                () {
-                  // Navigasi ke halaman ubah password
-                  _showChangePasswordDialog();
-                },
+                _showChangePasswordDialog,
               ),
               SizedBox(height: 12),
               _buildActionButton(
                 'Keluar',
                 Icons.logout,
                 Colors.red,
-                () {
-                  _showLogoutConfirmation();
-                },
+                _showLogoutConfirmation,
               ),
             ],
           ),
@@ -281,78 +373,16 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showEditProfileDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Edit Profil'),
-        content: Text('Fitur edit profil akan segera tersedia.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showChangePasswordDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Ubah Password'),
-        content: Text('Fitur ubah password akan segera tersedia.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Konfirmasi Keluar'),
-        content: Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _logout();
-            },
-            child: Text(
-              'Keluar',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _logout() {
-    // Implementasi logout
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Berhasil keluar'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    
-    // Navigasi ke halaman login
-    // Navigator.pushAndRemoveUntil(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => LoginPage()),
-    //   (route) => false,
-    // );
+  Color _getRoleColor(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return Colors.red;
+      case 'member':
+        return Colors.green;
+      case 'premium':
+        return Colors.orange;
+      default:
+        return Colors.blue;
+    }
   }
 }
