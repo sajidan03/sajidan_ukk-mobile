@@ -92,11 +92,11 @@ class ProductService {
     }
   }
 
-  // Update product
+  // Update product - menggunakan endpoint yang sama dengan add
   static Future<Map<String, dynamic>> updateProduct(Product product) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/products/update'),
+        Uri.parse('$baseUrl/products/save'), // Menggunakan endpoint yang sama
         headers: {
           'Content-Type': 'application/json',
         },
@@ -108,6 +108,7 @@ class ProductService {
         return {
           'success': data['success'] ?? false,
           'message': data['message'] ?? 'Produk berhasil diupdate',
+          'data': data['data'],
         };
       } else {
         return {
@@ -187,6 +188,41 @@ class ProductService {
           'success': data['success'] ?? false,
           'message': data['message'] ?? 'Gambar berhasil diupload',
         };
+      } else {
+        return {
+          'success': false,
+          'message': 'HTTP Error: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network Error: $e',
+      };
+    }
+  }
+
+  // Get single product by ID
+  static Future<Map<String, dynamic>> getProductById(int productId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/products/$productId'),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['success'] == true) {
+          final product = Product.fromJson(data['data']);
+          return {
+            'success': true,
+            'data': product,
+          };
+        } else {
+          return {
+            'success': false,
+            'message': data['message'] ?? 'Produk tidak ditemukan',
+          };
+        }
       } else {
         return {
           'success': false,

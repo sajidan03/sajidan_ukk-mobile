@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-// import 'package:image_picker/image_picker.dart';
-// import 'dart:io';
 import 'package:skillpp_kelas12/models/products_model.dart';
+import 'package:skillpp_kelas12/screens/profil.dart';
 import 'package:skillpp_kelas12/services/product_service.dart';
 import 'package:skillpp_kelas12/widgets/product_form_dialog.dart';
+import 'package:skillpp_kelas12/screens/profile_page.dart';
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({Key? key}) : super(key: key);
@@ -16,6 +16,7 @@ class _ProductListPageState extends State<ProductListPage> {
   List<Product> _products = [];
   bool _isLoading = true;
   String _errorMessage = '';
+  int _currentIndex = 0; // Index untuk bottom navigation
 
   @override
   void initState() {
@@ -159,6 +160,31 @@ class _ProductListPageState extends State<ProductListPage> {
     );
   }
 
+  // Method untuk menangani perubahan tab
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    
+    // Tambahkan logika navigasi untuk masing-masing tab di sini
+    switch (index) {
+      case 0: // Beranda
+        // Sudah di halaman beranda, tidak perlu navigasi
+        break;
+      case 1: // Toko Saya
+        // Bisa menambahkan navigasi ke halaman toko saya
+        // Navigator.push(context, MaterialPageRoute(builder: (context) => MyStorePage()));
+        break;
+      case 2: // Profil
+        // Navigasi ke halaman profil
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ProfilePage()),
+        );
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -182,6 +208,28 @@ class _ProductListPageState extends State<ProductListPage> {
         onPressed: _showAddProductDialog,
         child: Icon(Icons.add),
         backgroundColor: Colors.blue,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Beranda',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.store),
+            label: 'Toko Saya',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profil',
+          ),
+        ],
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
