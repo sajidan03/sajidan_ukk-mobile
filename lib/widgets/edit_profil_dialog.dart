@@ -8,10 +8,10 @@ class EditProfileDialog extends StatefulWidget {
   final Function() onProfileUpdated;
 
   const EditProfileDialog({
-    Key? key,
+    super.key,
     required this.profile,
     required this.onProfileUpdated,
-  }) : super(key: key);
+  });
 
   @override
   State<EditProfileDialog> createState() => _EditProfileDialogState();

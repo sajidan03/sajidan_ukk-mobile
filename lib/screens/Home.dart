@@ -7,7 +7,7 @@ import 'package:skillpp_kelas12/services/product_service.dart';
 import 'package:skillpp_kelas12/widgets/product_form_dialog.dart';
 
 class ProductListPage extends StatefulWidget {
-  const ProductListPage({Key? key}) : super(key: key);
+  const ProductListPage({super.key});
 
   @override
   State<ProductListPage> createState() => _ProductListPageState();
@@ -241,8 +241,8 @@ class _ProductListPageState extends State<ProductListPage> {
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddProductDialog,
-        child: Icon(Icons.add),
         backgroundColor: Colors.blue,
+        child: Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -347,12 +347,12 @@ class ProductCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const ProductCard({
-    Key? key,
+    super.key,
     required this.product,
     required this.onEdit,
     required this.onDelete,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

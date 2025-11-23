@@ -6,9 +6,9 @@ class ProductDetailPage extends StatefulWidget {
   final int productId;
 
   const ProductDetailPage({
-    Key? key,
+    super.key,
     required this.productId,
-  }) : super(key: key);
+  });
 
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
@@ -16,7 +16,9 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   Product? _product;
+  List<ProductImage> _productImages = []; // Tambahkan ini untuk gambar tambahan
   bool _isLoading = true;
+  bool _isLoadingImages = false; // Loading untuk gambar tambahan
   String _errorMessage = '';
   int _selectedImageIndex = 0;
 
@@ -24,6 +26,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   void initState() {
     super.initState();
     _loadProductDetail();
+    _loadProductImages(); // Load gambar tambahan
   }
 
   Future<void> _loadProductDetail() async {
@@ -46,8 +49,46 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     });
   }
 
+  // Method baru untuk load gambar tambahan
+  Future<void> _loadProductImages() async {
+    setState(() {
+      _isLoadingImages = true;
+    });
+
+    final result = await ProductService.getProductImages(widget.productId);
+
+    setState(() {
+      _isLoadingImages = false;
+      
+      if (result['success'] == true) {
+        _productImages = result['data'] as List<ProductImage>;
+        print('Loaded ${_productImages.length} additional images');
+      } else {
+        print('Error loading images: ${result['message']}');
+        // Tidak set error message karena ini optional
+      }
+    });
+  }
+
+  // Gabungkan semua gambar (dari product detail + dari endpoint images)
+  List<ProductImage> get _allImages {
+    final List<ProductImage> allImages = [];
+    
+    // Tambahkan gambar dari product detail (jika ada)
+    if (_product != null && _product!.images.isNotEmpty) {
+      allImages.addAll(_product!.images);
+    }
+    
+    // Tambahkan gambar dari endpoint images (jika ada)
+    if (_productImages.isNotEmpty) {
+      allImages.addAll(_productImages);
+    }
+    
+    return allImages;
+  }
+
   void _showImageDialog(int index) {
-    if (_product == null || _product!.images.isEmpty) return;
+    if (_allImages.isEmpty) return;
     
     showDialog(
       context: context,
@@ -61,7 +102,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: DecorationImage(
-                  image: NetworkImage(_product!.images[index].url),
+                  image: NetworkImage(_allImages[index].url),
                   fit: BoxFit.contain,
                 ),
               ),
@@ -97,7 +138,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
-            onPressed: _loadProductDetail,
+            onPressed: () {
+              _loadProductDetail();
+              _loadProductImages();
+            },
           ),
         ],
       ),
@@ -126,7 +170,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
             SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _loadProductDetail,
+              onPressed: () {
+                _loadProductDetail();
+                _loadProductImages();
+              },
               child: Text('Coba Lagi'),
             ),
           ],
@@ -158,6 +205,40 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           // Gambar Utama
           _buildMainImage(),
           SizedBox(height: 20),
+
+          // Loading indicator untuk gambar tambahan
+          if (_isLoadingImages)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Memuat gambar...',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+
+          // Info jumlah gambar
+          if (_allImages.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text(
+                '${_allImages.length} gambar tersedia',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
 
           // Nama Produk dan Harga
           Row(
@@ -366,7 +447,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Widget _buildMainImage() {
-    if (_product!.images.isEmpty) {
+    if (_allImages.isEmpty) {
       return Container(
         width: double.infinity,
         height: 250,
@@ -402,7 +483,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               image: DecorationImage(
-                image: NetworkImage(_product!.images[_selectedImageIndex].url),
+                image: NetworkImage(_allImages[_selectedImageIndex].url),
                 fit: BoxFit.cover,
               ),
             ),
@@ -411,12 +492,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         SizedBox(height: 12),
 
         // Thumbnail images
-        if (_product!.images.length > 1)
+        if (_allImages.length > 1)
           SizedBox(
             height: 80,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: _product!.images.length,
+              itemCount: _allImages.length,
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
@@ -437,7 +518,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         width: 2,
                       ),
                       image: DecorationImage(
-                        image: NetworkImage(_product!.images[index].url),
+                        image: NetworkImage(_allImages[index].url),
                         fit: BoxFit.cover,
                       ),
                     ),

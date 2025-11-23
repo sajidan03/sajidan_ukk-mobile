@@ -6,7 +6,7 @@ import 'package:skillpp_kelas12/widgets/edit_profil_dialog.dart';
 import 'package:skillpp_kelas12/services/login_service.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();

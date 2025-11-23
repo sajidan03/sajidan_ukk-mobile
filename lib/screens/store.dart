@@ -4,7 +4,7 @@ import 'package:skillpp_kelas12/services/store_service.dart';
 import 'package:skillpp_kelas12/widgets/edit_store_dialog.dart';
 
 class StorePage extends StatefulWidget {
-  const StorePage({Key? key}) : super(key: key);
+  const StorePage({super.key});
 
   @override
   State<StorePage> createState() => _StorePageState();

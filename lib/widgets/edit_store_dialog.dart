@@ -7,10 +7,10 @@ class EditStoreDialog extends StatefulWidget {
   final Function() onStoreUpdated;
 
   const EditStoreDialog({
-    Key? key,
+    super.key,
     required this.store,
     required this.onStoreUpdated,
-  }) : super(key: key);
+  });
 
   @override
   State<EditStoreDialog> createState() => _EditStoreDialogState();

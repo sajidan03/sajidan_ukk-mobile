@@ -10,10 +10,10 @@ class ProductFormDialog extends StatefulWidget {
   final Function(Product, List<String>) onSave;
 
   const ProductFormDialog({
-    Key? key,
+    super.key,
     this.product,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<ProductFormDialog> createState() => _ProductFormDialogState();
@@ -28,7 +28,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   final TextEditingController _deskripsiController = TextEditingController();
   
   int _selectedKategori = 1;
-  List<String> _selectedImages = [];
+  final List<String> _selectedImages = [];
   List<Category> _categories = [];
   bool _isLoadingCategories = true;
   String _categoriesError = '';
@@ -217,7 +217,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                           ),
                         )
                       : DropdownButtonFormField<int>(
-                          value: _selectedKategori,
+                          initialValue: _selectedKategori,
                           decoration: InputDecoration(
                             labelText: 'Kategori',
                             border: OutlineInputBorder(),

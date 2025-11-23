@@ -370,4 +370,70 @@ static Future<Map<String, dynamic>> getProductDetail(int productId) async {
     };
   }
 }
+// Get product images by product ID
+static Future<Map<String, dynamic>> getProductImages(int productId) async {
+  try {
+    final String? token = await LoginService.getToken();
+    
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    print('Fetching product images for ID: $productId');
+    print('Endpoint: $baseUrl/products/$productId/images');
+    
+    final response = await http.get(
+      Uri.parse('$baseUrl/products/$productId/images'),
+      headers: headers,
+    );
+
+    print('Product Images Status: ${response.statusCode}');
+    print('Product Images Response: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      if (data['success'] == true) {
+        // Parse list of images
+        final List<ProductImage> images = (data['data'] as List)
+            .map((imageJson) => ProductImage.fromJson(imageJson))
+            .toList();
+        
+        return {
+          'success': true,
+          'data': images,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Gambar tidak ditemukan',
+        };
+      }
+    } else if (response.statusCode == 404) {
+      return {
+        'success': false,
+        'message': 'Gambar produk tidak ditemukan (404)',
+      };
+    } else if (response.statusCode == 401) {
+      return {
+        'success': false,
+        'message': 'Token tidak valid. Silakan login kembali.',
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'HTTP Error: ${response.statusCode} - ${response.body}',
+      };
+    }
+  } catch (e) {
+    print('Product Images Error: $e');
+    return {
+      'success': false,
+      'message': 'Network Error: $e',
+    };
+  }
+}
 }

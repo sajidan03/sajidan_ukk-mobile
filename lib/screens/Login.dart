@@ -125,7 +125,7 @@ class _LoginState extends State<Login> {
                     alignment: Alignment.center,
                     child: Column(
                       children: [
-                        Container(
+                        SizedBox(
                           width: 120,
                           height: 120,
                           child: Image.asset(

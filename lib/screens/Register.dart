@@ -4,7 +4,7 @@ import 'package:skillpp_kelas12/screens/Login.dart';
 import 'package:skillpp_kelas12/services/register_service.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({Key? key}) : super(key: key);
+  const RegisterPage({super.key});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
