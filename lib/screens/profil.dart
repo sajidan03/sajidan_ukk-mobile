@@ -3,7 +3,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:skillpp_kelas12/models/store_model.dart';
 import 'package:skillpp_kelas12/services/login_service.dart';
 import 'package:skillpp_kelas12/services/store_service.dart';
-import 'package:skillpp_kelas12/widgets/edit_profile_dialog.dart';
+import 'package:skillpp_kelas12/widgets/edit_profil_dialog.dart';
+import 'package:skillpp_kelas12/models/profil_model.dart';
+import 'package:skillpp_kelas12/services/profil_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -13,7 +15,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  Map<String, dynamic>? _userData;
+  Profile? _userData;
   Store? _store;
   bool _isLoading = true;
   bool _isCheckingStore = true;
@@ -41,11 +43,20 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     try {
-      final userData = await LoginService.getUserData();
-      setState(() {
-        _userData = userData;
-        _isLoading = false;
-      });
+      final result = await ProfileService.getProfile();
+      
+      if (result['success'] == true) {
+        final profileResponse = result['data'] as ProfileResponse;
+        setState(() {
+          _userData = profileResponse.data;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = result['message'] ?? 'Gagal memuat data profil';
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() {
         _errorMessage = 'Gagal memuat data pengguna: $e';
@@ -88,7 +99,7 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (context) => EditProfileDialog(
-        userData: _userData!,
+        profile: _userData!,
         onProfileUpdated: _loadUserData,
       ),
     );
@@ -227,21 +238,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _pickImage(StateSetter setDialogState) async {
     // NOTE: Untuk simplicity, kita pakai URL gambar dummy
-    // Dalam implementasi real, gunakan image_picker untuk ambil dari gallery/kamera
     setDialogState(() {
       _selectedImagePath = 'https://via.placeholder.com/150';
     });
-    
-    // Kode real untuk image_picker:
-    /*
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setDialogState(() {
-        _selectedImagePath = pickedFile.path;
-      });
-    }
-    */
   }
 
   Future<void> _registerStore() async {
@@ -265,7 +264,7 @@ class _ProfilePageState extends State<ProfilePage> {
       'deskripsi': _deskripsiController.text,
       'kontak_toko': _kontakController.text,
       'alamat': _alamatController.text,
-      'gambar': _selectedImagePath ?? '', // Dalam real implementation, upload file
+      'gambar': _selectedImagePath ?? '',
     };
 
     final result = await StoreService.registerStore(storeData);
@@ -278,8 +277,8 @@ class _ProfilePageState extends State<ProfilePage> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context); // Tutup dialog
-        _checkStoreStatus(); // Refresh status toko
+        Navigator.pop(context);
+        _checkStoreStatus();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -414,29 +413,21 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: EdgeInsets.all(20),
         child: Column(
           children: [
-            // Foto Profil
+            // Foto Profil - Default karena tidak ada dari API
             Container(
               width: 100,
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.blue[100],
-                image: _userData!['foto'] != null
-                    ? DecorationImage(
-                        image: NetworkImage(_userData!['foto']),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
               ),
-              child: _userData!['foto'] == null
-                  ? Icon(Icons.person, size: 40, color: Colors.blue[700])
-                  : null,
+              child: Icon(Icons.person, size: 40, color: Colors.blue[700]),
             ),
             SizedBox(height: 16),
 
             // Nama User
             Text(
-              _userData!['nama'] ?? 'Tidak ada nama',
+              _userData!.nama,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -445,12 +436,30 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 4),
 
-            // Email
+            // Username (gunakan username karena tidak ada email)
             Text(
-              _userData!['email'] ?? 'Tidak ada email',
+              '@${_userData!.username}',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
+              ),
+            ),
+            SizedBox(height: 8),
+
+            // Role badge
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: _getRoleColor(_userData!.role),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _userData!.role.toUpperCase(),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             SizedBox(height: 16),
@@ -464,7 +473,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 border: Border.all(color: Colors.green[200]!),
               ),
               child: Text(
-                'ID: ${_userData!['id'] ?? 'N/A'}',
+                'ID: ${_userData!.idUser}',
                 style: TextStyle(
                   color: Colors.green[800],
                   fontSize: 12,
@@ -472,10 +481,66 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
+            SizedBox(height: 8),
+
+            // Kontak
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.phone, size: 16, color: Colors.grey[600]),
+                SizedBox(width: 4),
+                Text(
+                  _userData!.kontak,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 4),
+
+            // Tanggal Bergabung
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.calendar_today, size: 14, color: Colors.grey[500]),
+                SizedBox(width: 4),
+                Text(
+                  'Bergabung: ${_formatDate(_userData!.createdAt)}',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Color _getRoleColor(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return Colors.red;
+      case 'member':
+        return Colors.blue;
+      case 'seller':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return dateString;
+    }
   }
 
   Widget _buildStoreStatus() {
