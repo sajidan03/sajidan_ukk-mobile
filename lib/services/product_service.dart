@@ -6,7 +6,6 @@ import 'package:skillpp_kelas12/services/login_service.dart';
 class ProductService {
   static const String baseUrl = 'https://learncode.biz.id/api';
 
-  // Get products dengan token
   static Future<Map<String, dynamic>> getProducts() async {
     try {
       final String? token = await LoginService.getToken();
@@ -15,7 +14,6 @@ class ProductService {
         'Content-Type': 'application/json',
       };
       
-      // Tambahkan token jika ada
       if (token != null) {
         headers['Authorization'] = 'Bearer $token';
       }
@@ -213,7 +211,6 @@ class ProductService {
     }
   }
 
-  // Delete product dengan token
   static Future<Map<String, dynamic>> deleteProduct(int productId) async {
     try {
       final String? token = await LoginService.getToken();
@@ -227,9 +224,10 @@ class ProductService {
       }
 
       print('Delete Product ID: $productId');
+      print('Endpoint: $baseUrl/products/$productId/delete');
 
       final response = await http.post(
-        Uri.parse('$baseUrl/products/delete'),
+        Uri.parse('$baseUrl/products/$productId/delete'), // ENDPOINT YANG BENAR
         headers: headers,
         body: json.encode({
           'id': productId,

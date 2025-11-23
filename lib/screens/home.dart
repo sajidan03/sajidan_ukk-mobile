@@ -59,6 +59,16 @@ class _ProductListPageState extends State<ProductListPage> {
         _products = productResponse.data;
       } else {
         _errorMessage = result['message'] ?? 'Terjadi kesalahan';
+        
+        // Tampilkan snackbar error jika perlu
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        });
       }
     });
   }
@@ -87,14 +97,33 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   void _contactSeller(String phoneNumber) async {
-    final url = 'https://wa.me/$phoneNumber?text=Halo,%20saya%20tertarik%20dengan%20produk%20Anda';
+    // Format nomor telepon (hapus karakter non-digit)
+    String formattedPhone = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
     
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
-    } else {
+    // Pastikan nomor diawali dengan 62 (kode Indonesia)
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = '62${formattedPhone.substring(1)}';
+    } else if (!formattedPhone.startsWith('62')) {
+      formattedPhone = '62$formattedPhone';
+    }
+    
+    final url = 'https://wa.me/$formattedPhone?text=${Uri.encodeComponent('Halo, saya tertarik dengan produk Anda')}';
+    
+    try {
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tidak dapat membuka WhatsApp'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Tidak dapat membuka WhatsApp'),
+          content: Text('Error: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -241,7 +270,6 @@ class _ProductListPageState extends State<ProductListPage> {
     );
   }
 
-  // ... (sisanya sama seperti sebelumnya, _buildBody(), _buildProductCard(), dll)
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
