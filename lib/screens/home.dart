@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:skillpp_kelas12/screens/costumer_detail.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:skillpp_kelas12/models/products_model.dart';
-import 'package:skillpp_kelas12/screens/detail_produk.dart';
 import 'package:skillpp_kelas12/screens/profil.dart';
 import 'package:skillpp_kelas12/screens/store.dart';
 import 'package:skillpp_kelas12/services/product_service.dart';
-import 'package:skillpp_kelas12/widgets/product_form_dialog.dart';
+import 'package:skillpp_kelas12/services/store_service.dart';
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({super.key});
@@ -16,13 +17,30 @@ class ProductListPage extends StatefulWidget {
 class _ProductListPageState extends State<ProductListPage> {
   List<Product> _products = [];
   bool _isLoading = true;
+  bool _isCheckingStore = true;
+  bool _hasStore = false;
   String _errorMessage = '';
-  int _currentIndex = 0; // Index untuk bottom navigation
+  int _currentIndex = 0;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _checkStoreStatus();
     _loadProducts();
+  }
+
+  Future<void> _checkStoreStatus() async {
+    setState(() {
+      _isCheckingStore = true;
+    });
+
+    final hasStore = await StoreService.hasStore();
+    
+    setState(() {
+      _hasStore = hasStore;
+      _isCheckingStore = false;
+    });
   }
 
   Future<void> _loadProducts() async {
@@ -45,155 +63,44 @@ class _ProductListPageState extends State<ProductListPage> {
     });
   }
 
-  void _showAddProductDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => ProductFormDialog(
-        onSave: (product, images) async {
-          final result = await ProductService.addProduct(product);
-          
-          print('Add Product Result: $result');
-          
-          if (result['success'] == true) {
-            // Handle product ID - bisa dari berbagai kemungkinan field
-            final productId = result['data']['id'] ?? 
-                             result['data']['id_produk'] ?? 
-                             result['data']['data']['id'] ??
-                             result['data']['data']['id_produk'];
-            
-            print('Product ID from response: $productId');
-            
-            if (images.isNotEmpty && productId != null) {
-              await ProductService.uploadImages(productId, images);
-            }
-            
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(result['message'] ?? 'Produk berhasil ditambahkan'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-              _loadProducts();
-              Navigator.pop(context);
-            }
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Gagal menambah produk: ${result['message']}'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        },
+  void _searchProducts(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _loadProducts();
+      } else {
+        final filteredProducts = _products.where((product) =>
+            product.namaProduk.toLowerCase().contains(query.toLowerCase()) ||
+            product.deskripsi.toLowerCase().contains(query.toLowerCase()) ||
+            product.namaKategori.toLowerCase().contains(query.toLowerCase())).toList();
+        _products = filteredProducts;
+      }
+    });
+  }
+
+  void _navigateToProductDetail(Product product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CustomerProductDetailPage(productId: product.idProduk),
       ),
     );
   }
 
-  void _showEditProductDialog(Product product) {
-    showDialog(
-      context: context,
-      builder: (context) => ProductFormDialog(
-        product: product,
-        onSave: (updatedProduct, images) async {
-          try {
-            print('Starting update process...');
-            print('Updated product data: ${updatedProduct.toJson()}');
-            
-            final result = await ProductService.updateProduct(updatedProduct);
-            
-            print('Update result: $result');
-            
-            if (result['success'] == true) {
-              // Upload gambar jika ada gambar baru
-              if (images.isNotEmpty) {
-                final productId = result['data']['id'] ?? updatedProduct.id ?? updatedProduct.idProduk;
-                if (productId != null) {
-                  await ProductService.uploadImages(productId, images);
-                }
-              }
-              
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Produk berhasil diupdate'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                _loadProducts();
-                Navigator.pop(context);
-              }
-            } else {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Gagal update produk: ${result['message']}'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            }
-          } catch (e) {
-            print('Error in edit dialog: $e');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Error: $e'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        },
-      ),
-    );
+  void _contactSeller(String phoneNumber) async {
+    final url = 'https://wa.me/$phoneNumber?text=Halo,%20saya%20tertarik%20dengan%20produk%20Anda';
+    
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tidak dapat membuka WhatsApp'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
-  void _showDeleteConfirmation(Product product) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Hapus Produk'),
-        content: Text('Yakin ingin menghapus "${product.namaProduk}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final result = await ProductService.deleteProduct(product.id!);
-              
-              if (mounted) {
-                if (result['success'] == true) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Produk berhasil dihapus'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  _loadProducts();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Gagal menghapus produk: ${result['message']}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text('Hapus', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Method untuk menangani perubahan tab
   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
@@ -201,17 +108,32 @@ class _ProductListPageState extends State<ProductListPage> {
     
     switch (index) {
       case 0: // Beranda
-        // Sudah di halaman beranda, tidak perlu navigasi
         break;
-      case 1: // Toko Saya
-        // Navigasi ke halaman toko saya
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => StorePage()),
-        );
+      case 1: // Toko Saya - hanya jika punya toko
+        if (_hasStore) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => StorePage()),
+          );
+        } else {
+          // Arahkan ke profil untuk daftar toko
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ProfilePage()),
+          );
+          // Tampilkan snackbar info
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Anda belum memiliki toko. Daftar terlebih dahulu di menu Profil.'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          });
+        }
         break;
       case 2: // Profil
-        // Navigasi ke halaman profil
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => ProfilePage()),
@@ -223,28 +145,54 @@ class _ProductListPageState extends State<ProductListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Daftar Produk'),
+        title: const Text(
+          'Toko Online',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _loadProducts,
-          ),
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: _showAddProductDialog,
-          ),
-        ],
+        elevation: 0,
       ),
       body: _buildBody(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddProductDialog,
-        backgroundColor: Colors.blue,
-        child: Icon(Icons.add),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: _buildBottomNavigationBar(),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    // Jika masih checking store status, tampilkan loading
+    if (_isCheckingStore) {
+      return BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Beranda',
+          ),
+          BottomNavigationBarItem(
+            icon: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.blue)),
+            label: 'Loading...',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profil',
+          ),
+        ],
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+      );
+    }
+
+    // Jika sudah punya toko, tampilkan semua menu
+    if (_hasStore) {
+      return BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
         items: const [
@@ -265,13 +213,40 @@ class _ProductListPageState extends State<ProductListPage> {
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
-      ),
+      );
+    }
+
+    // Jika belum punya toko, sembunyikan menu "Toko Saya"
+    return BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: _onTabTapped,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Beranda',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.store_mall_directory_outlined),
+          label: 'Buka Toko',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person),
+          label: 'Profil',
+        ),
+      ],
+      selectedItemColor: Colors.blue,
+      unselectedItemColor: Colors.grey,
+      showUnselectedLabels: true,
+      type: BottomNavigationBarType.fixed,
     );
   }
 
+  // ... (sisanya sama seperti sebelumnya, _buildBody(), _buildProductCard(), dll)
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
     if (_errorMessage.isNotEmpty) {
@@ -307,285 +282,281 @@ class _ProductListPageState extends State<ProductListPage> {
               'Tidak ada produk tersedia',
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _showAddProductDialog,
-              child: Text('Tambah Produk Pertama'),
-            ),
           ],
         ),
       );
     }
 
-    return ListView.builder(
-      itemCount: _products.length,
-      itemBuilder: (context, index) {
-        final product = _products[index];
-        return ProductCard(
-          product: product,
-          onEdit: () => _showEditProductDialog(product),
-          onDelete: () => _showDeleteConfirmation(product),
-          onTap: () {
-            // Navigasi ke halaman detail produk
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProductDetailPage(productId: product.idProduk),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class ProductCard extends StatelessWidget {
-  final Product product;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-  final VoidCallback onTap;
-
-  const ProductCard({
-    super.key,
-    required this.product,
-    required this.onEdit,
-    required this.onDelete,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.all(8),
-      elevation: 2,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header dengan nama produk dan action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      product.namaProduk,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+    return CustomScrollView(
+      slivers: [
+        // Search Bar
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
                   ),
-                  PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert),
-                    onSelected: (value) {
-                      if (value == 'detail') onTap();
-                      if (value == 'edit') onEdit();
-                      if (value == 'delete') onDelete();
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'detail',
-                        child: Row(
-                          children: [
-                            Icon(Icons.visibility, size: 20),
-                            SizedBox(width: 8),
-                            Text('Detail'),
-                          ],
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Cari produk...',
+                  prefixIcon: Icon(Icons.search, color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onChanged: _searchProducts,
+              ),
+            ),
+          ),
+        ),
+
+        // Banner Promosi
+        SliverToBoxAdapter(
+          child: Container(
+            height: 120,
+            margin: EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [Colors.blue, Colors.lightBlue],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: 20,
+                  top: 10,
+                  child: Icon(Icons.shopping_bag, size: 60, color: Colors.white30),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Special Offer',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text('Edit'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, size: 20, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Hapus', style: TextStyle(color: Colors.red)),
-                          ],
+                      SizedBox(height: 8),
+                      Text(
+                        'Diskon hingga 50% untuk produk pilihan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-              SizedBox(height: 8),
-              
-              // Kategori
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  product.namaKategori,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.blue[700],
-                    fontWeight: FontWeight.w500,
+              ],
+            ),
+          ),
+        ),
+
+        // Header Produk
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+            child: Text(
+              '🛍️ Semua Produk',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+          ),
+        ),
+
+        // Grid Produk
+        SliverPadding(
+          padding: EdgeInsets.all(16),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.75,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final product = _products[index];
+                return _buildProductCard(product);
+              },
+              childCount: _products.length,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProductCard(Product product) {
+    return GestureDetector(
+      onTap: () => _navigateToProductDetail(product),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Gambar Produk
+            Stack(
+              children: [
+                Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                    image: product.images.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(product.images.first.url),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                    color: Colors.grey[200],
                   ),
+                  child: product.images.isEmpty
+                      ? Icon(Icons.photo, size: 40, color: Colors.grey[400])
+                      : null,
                 ),
-              ),
-              SizedBox(height: 8),
-              
-              // Harga dan Stok
-              Row(
-                children: [
-                  Text(
-                    product.formattedPrice,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Text(
-                    'Stok: ${product.stok}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              
-              // Deskripsi
-              Text(
-                product.deskripsi,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[700],
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: 8),
-              
-              // Info Toko
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.store, size: 16, color: Colors.grey[600]),
-                    SizedBox(width: 8),
-                    Expanded(
+                
+                // Badge Stok Habis
+                if (product.intStok == 0)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                       child: Text(
-                        product.toko.nama,
+                        'HABIS',
                         style: TextStyle(
-                          fontSize: 14,
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
+            // Info Produk
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Nama Produk
+                    Text(
+                      product.namaProduk,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 4),
+
+                    // Harga
+                    Text(
+                      product.formattedPrice,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.green[700],
+                      ),
+                    ),
+                    SizedBox(height: 4),
+
+                    // Kategori
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        product.namaKategori,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.blue[700],
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    Icon(Icons.phone, size: 16, color: Colors.grey[600]),
-                    SizedBox(width: 4),
+                    SizedBox(height: 4),
+
+                    // Stok
                     Text(
-                      product.toko.kontak,
+                      'Stok: ${product.stok}',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: Colors.grey[600],
                       ),
                     ),
+
+                    Spacer(),
+
+                    // Tombol WhatsApp
+                    if (product.intStok > 0)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: Icon(Icons.chat, size: 16),
+                          label: Text(
+                            'Chat',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () => _contactSeller(product.toko.kontak),
+                        ),
+                      ),
                   ],
                 ),
-              ),
-              SizedBox(height: 8),
-              
-              // Gambar Produk
-              _buildProductImages(),
-              
-              // Tanggal Upload
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'Upload: ${product.tanggalUpload}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProductImages() {
-    if (product.images.isEmpty) {
-      return Container(
-        width: double.infinity,
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.no_photography, color: Colors.grey[400]),
-            SizedBox(height: 4),
-            Text(
-              'Tidak ada gambar',
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 12,
               ),
             ),
           ],
         ),
-      );
-    }
-
-    return SizedBox(
-      height: 80,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: product.images.length,
-        itemBuilder: (context, index) {
-          final image = product.images[index];
-          return Container(
-            margin: EdgeInsets.only(right: 8),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                image.url,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 80,
-                    height: 80,
-                    color: Colors.grey[200],
-                    child: Icon(Icons.broken_image, color: Colors.grey[400]),
-                  );
-                },
-              ),
-            ),
-          );
-        },
       ),
     );
   }

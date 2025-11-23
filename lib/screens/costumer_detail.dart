@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:skillpp_kelas12/models/costumer_product_model.dart';
-import 'package:skillpp_kelas12/services/costumer_service.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:skillpp_kelas12/models/products_model.dart';
+import 'package:skillpp_kelas12/services/product_service.dart';
 
 class CustomerProductDetailPage extends StatefulWidget {
   final int productId;
@@ -15,7 +16,7 @@ class CustomerProductDetailPage extends StatefulWidget {
 }
 
 class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
-  CustomerProduct? _product;
+  Product? _product;
   bool _isLoading = true;
   String _errorMessage = '';
   int _selectedImageIndex = 0;
@@ -33,17 +34,38 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
       _errorMessage = '';
     });
 
-    try {
-      final product = await CustomerProductService.getProductDetail(widget.productId);
-      setState(() {
-        _product = product;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
+    final result = await ProductService.getProductDetail(widget.productId);
+
+    setState(() {
+      _isLoading = false;
+      
+      if (result['success'] == true) {
+        final productDetailResponse = result['data'] as ProductDetailResponse;
+        _product = productDetailResponse.data;
+      } else {
+        _errorMessage = result['message'] ?? 'Terjadi kesalahan';
+      }
+    });
+  }
+
+  void _contactSeller() async {
+    if (_product == null) return;
+    
+    final phoneNumber = _product!.toko.kontak;
+    final productName = _product!.namaProduk;
+    final message = 'Halo, saya tertarik dengan produk ${_product!.namaProduk} yang Anda jual. Bisa info lebih lanjut?';
+    
+    final url = 'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
+    
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tidak dapat membuka WhatsApp'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -62,7 +84,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: DecorationImage(
-                  image: NetworkImage(_product!.images[index]),
+                  image: NetworkImage(_product!.images[index].url),
                   fit: BoxFit.contain,
                 ),
               ),
@@ -84,26 +106,6 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _addToCart() {
-    // TODO: Implement add to cart functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${_product!.nama} ditambahkan ke keranjang'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  void _buyNow() {
-    // TODO: Implement buy now functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Membeli ${_product!.nama}'),
-        backgroundColor: Colors.blue,
       ),
     );
   }
@@ -190,7 +192,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
               children: [
                 // Nama dan Harga
                 Text(
-                  _product!.nama,
+                  _product!.namaProduk,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -207,17 +209,25 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                 ),
                 SizedBox(height: 16),
 
-                // Rating dan Terjual
+                // Kategori dan Stok
                 Row(
                   children: [
-                    _buildRatingStars(_product!.rating),
-                    SizedBox(width: 8),
-                    Text(
-                      _product!.rating.toStringAsFixed(1),
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: Text(
+                        _product!.namaKategori,
+                        style: TextStyle(
+                          color: Colors.blue[700],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                    SizedBox(width: 4),
-                    Text('(${_product!.terjual} terjual)'),
                     Spacer(),
                     if (!_product!.isAvailable)
                       Container(
@@ -235,6 +245,47 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                         ),
                       ),
                   ],
+                ),
+                SizedBox(height: 16),
+
+                // Info Stok
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.inventory_2, color: Colors.grey[600]),
+                      SizedBox(width: 12),
+                      Text(
+                        'Stok Tersedia: ${_product!.stok}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      Spacer(),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _product!.intStok > 0 ? Colors.green[100] : Colors.red[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _product!.intStok > 0 ? 'Tersedia' : 'Habis',
+                          style: TextStyle(
+                            color: _product!.intStok > 0 ? Colors.green[800] : Colors.red[800],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 SizedBox(height: 16),
 
@@ -260,29 +311,6 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                 // Info Toko
                 _buildStoreInfo(),
                 SizedBox(height: 24),
-
-                // Ulasan (placeholder)
-                Text(
-                  'Ulasan Produk',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Belum ada ulasan untuk produk ini',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -296,7 +324,20 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
       return Container(
         color: Colors.grey[200],
         child: Center(
-          child: Icon(Icons.photo, size: 100, color: Colors.grey[400]),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.no_photography, size: 60, color: Colors.grey[400]),
+              SizedBox(height: 8),
+              Text(
+                'Tidak ada gambar',
+                style: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -316,7 +357,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
               child: Container(
                 color: Colors.white,
                 child: Image.network(
-                  _product!.images[index],
+                  _product!.images[index].url,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
@@ -358,18 +399,6 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
     );
   }
 
-  Widget _buildRatingStars(double rating) {
-    return Row(
-      children: List.generate(5, (index) {
-        return Icon(
-          index < rating.floor() ? Icons.star : Icons.star_border,
-          color: Colors.amber,
-          size: 20,
-        );
-      }),
-    );
-  }
-
   Widget _buildStoreInfo() {
     return Container(
       padding: EdgeInsets.all(16),
@@ -377,50 +406,60 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: Colors.blue[100],
-            child: Icon(Icons.store, color: Colors.blue),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4,
+            offset: Offset(0, 2),
           ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _product!.store.nama,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  _product!.store.alamat,
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                SizedBox(height: 4),
-                Row(
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.blue[100],
+                child: Icon(Icons.store, color: Colors.blue),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.star, color: Colors.amber, size: 16),
-                    SizedBox(width: 4),
-                    Text(_product!.store.rating.toStringAsFixed(1)),
-                    SizedBox(width: 8),
-                    Icon(Icons.inventory_2, size: 16, color: Colors.grey),
-                    SizedBox(width: 4),
-                    Text('${_product!.store.produkCount} produk'),
+                    Text(
+                      _product!.toko.nama,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      _product!.toko.alamat,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          IconButton(
-            icon: Icon(Icons.chat, color: Colors.blue),
-            onPressed: () {
-              // TODO: Implement chat with store
-            },
+          SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: Icon(Icons.chat),
+              label: Text('Chat via WhatsApp'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: _contactSeller,
+            ),
           ),
         ],
       ),
@@ -468,7 +507,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                   ),
                   IconButton(
                     icon: Icon(Icons.add, size: 18),
-                    onPressed: _quantity < _product!.stok
+                    onPressed: _quantity < _product!.intStok
                         ? () => setState(() => _quantity++)
                         : null,
                   ),
@@ -480,30 +519,23 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
 
           Expanded(
             child: ElevatedButton.icon(
-              icon: Icon(Icons.shopping_cart),
-              label: Text('Keranjang'),
+              icon: Icon(Icons.chat),
+              label: Text('Chat Penjual'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(vertical: 12),
               ),
-              onPressed: _product!.isAvailable ? _addToCart : null,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton(
-              child: Text('Beli Sekarang'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 12),
-              ),
-              onPressed: _product!.isAvailable ? _buyNow : null,
+              onPressed: _product!.isAvailable ? _contactSeller : null,
             ),
           ),
         ],
       ),
     );
   }
+}
+
+// Extension untuk Product
+extension ProductAvailability on Product {
+  bool get isAvailable => intStok > 0;
 }

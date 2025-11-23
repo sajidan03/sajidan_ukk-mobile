@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:skillpp_kelas12/models/login_model.dart';
+import 'package:skillpp_kelas12/screens/costumer_home.dart';
 import 'package:skillpp_kelas12/screens/home.dart';
 import 'package:skillpp_kelas12/screens/register.dart';
 import '../services/login_service.dart';
@@ -381,50 +382,8 @@ class _LoginState extends State<Login> {
 
                         SizedBox(height: 12),
                         
-                        // Tombol Lanjutkan tanpa akun dengan warna yang selaras
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Navigasi langsung tanpa login
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => ProductListPage()),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey.shade300, // Warna abu-abu yang selaras
-                              foregroundColor: Colors.grey.shade700,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 18,
-                                horizontal: 24,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Lanjutkan tanpa akun',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 20,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                       
+                       
                       ],
                     ),
                   ),

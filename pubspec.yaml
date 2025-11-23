@@ -15,6 +15,7 @@ dependencies:
   permission_handler: ^11.0.0
   file_picker: ^10.3.7
   animate_do: ^3.3.4
+  url_launcher: ^6.1.11
 
 dev_dependencies:
   flutter_test:
