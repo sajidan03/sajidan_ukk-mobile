@@ -16,9 +16,9 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   Product? _product;
-  List<ProductImage> _productImages = []; // Tambahkan ini untuk gambar tambahan
+  List<ProductImage> _productImages = [];
   bool _isLoading = true;
-  bool _isLoadingImages = false; // Loading untuk gambar tambahan
+  bool _isLoadingImages = false;
   String _errorMessage = '';
   int _selectedImageIndex = 0;
 
@@ -26,7 +26,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   void initState() {
     super.initState();
     _loadProductDetail();
-    _loadProductImages(); // Load gambar tambahan
+    _loadProductImages();
   }
 
   Future<void> _loadProductDetail() async {
@@ -49,7 +49,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     });
   }
 
-  // Method baru untuk load gambar tambahan
   Future<void> _loadProductImages() async {
     setState(() {
       _isLoadingImages = true;
@@ -65,21 +64,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         print('Loaded ${_productImages.length} additional images');
       } else {
         print('Error loading images: ${result['message']}');
-        // Tidak set error message karena ini optional
       }
     });
   }
 
-  // Gabungkan semua gambar (dari product detail + dari endpoint images)
   List<ProductImage> get _allImages {
     final List<ProductImage> allImages = [];
     
-    // Tambahkan gambar dari product detail (jika ada)
     if (_product != null && _product!.images.isNotEmpty) {
       allImages.addAll(_product!.images);
     }
     
-    // Tambahkan gambar dari endpoint images (jika ada)
     if (_productImages.isNotEmpty) {
       allImages.addAll(_productImages);
     }
@@ -89,6 +84,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   void _showImageDialog(int index) {
     if (_allImages.isEmpty) return;
+    
+    final validIndex = index.clamp(0, _allImages.length - 1);
+    final image = _allImages[validIndex];
+    final imageUrl = image.imageUrl;
+    
+    if (imageUrl.isEmpty) return;
     
     showDialog(
       context: context,
@@ -102,7 +103,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: DecorationImage(
-                  image: NetworkImage(_allImages[index].url),
+                  image: NetworkImage(imageUrl),
                   fit: BoxFit.contain,
                 ),
               ),
@@ -206,7 +207,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           _buildMainImage(),
           SizedBox(height: 20),
 
-          // Loading indicator untuk gambar tambahan
           if (_isLoadingImages)
             Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
@@ -227,7 +227,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ),
             ),
 
-          // Info jumlah gambar
           if (_allImages.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(bottom: 8),
@@ -257,7 +256,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ),
           SizedBox(height: 8),
 
-          // Harga
           Text(
             _product!.formattedPrice,
             style: TextStyle(
@@ -414,6 +412,22 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ),
                   ],
                 ),
+                SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, color: Colors.orange, size: 20),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _product!.toko.alamat,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -447,7 +461,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Widget _buildMainImage() {
-    if (_allImages.isEmpty) {
+    final images = _allImages;
+    
+    if (images.isEmpty) {
       return Container(
         width: double.infinity,
         height: 250,
@@ -472,6 +488,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       );
     }
 
+    // Pastikan index valid
+    if (_selectedImageIndex >= images.length) {
+      _selectedImageIndex = 0;
+    }
+
+    final currentImage = images[_selectedImageIndex];
+    final imageUrl = currentImage.imageUrl;
+
     return Column(
       children: [
         // Gambar utama
@@ -482,23 +506,45 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             height: 250,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              image: DecorationImage(
-                image: NetworkImage(_allImages[_selectedImageIndex].url),
-                fit: BoxFit.cover,
-              ),
+              color: Colors.grey[200],
+              image: imageUrl.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(imageUrl),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
+            child: imageUrl.isEmpty
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.broken_image, size: 60, color: Colors.grey[400]),
+                      SizedBox(height: 8),
+                      Text(
+                        'Gambar tidak tersedia',
+                        style: TextStyle(
+                          color: Colors.grey[500],
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  )
+                : null,
           ),
         ),
         SizedBox(height: 12),
 
         // Thumbnail images
-        if (_allImages.length > 1)
+        if (images.length > 1)
           SizedBox(
             height: 80,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: _allImages.length,
+              itemCount: images.length,
               itemBuilder: (context, index) {
+                final thumbnail = images[index];
+                final thumbnailUrl = thumbnail.imageUrl;
+                
                 return GestureDetector(
                   onTap: () {
                     setState(() {
@@ -517,11 +563,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             : Colors.transparent,
                         width: 2,
                       ),
-                      image: DecorationImage(
-                        image: NetworkImage(_allImages[index].url),
-                        fit: BoxFit.cover,
-                      ),
+                      color: Colors.grey[200],
+                      image: thumbnailUrl.isNotEmpty
+                          ? DecorationImage(
+                              image: NetworkImage(thumbnailUrl),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
                     ),
+                    child: thumbnailUrl.isEmpty
+                        ? Icon(Icons.broken_image, color: Colors.grey[400])
+                        : null,
                   ),
                 );
               },
