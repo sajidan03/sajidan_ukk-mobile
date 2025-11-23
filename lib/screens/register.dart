@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:skillpp_kelas12/models/register_model.dart';
-import 'package:skillpp_kelas12/screens/Login.dart';
+import 'package:skillpp_kelas12/screens/login.dart';
 import 'package:skillpp_kelas12/services/register_service.dart';
 
 class RegisterPage extends StatefulWidget {

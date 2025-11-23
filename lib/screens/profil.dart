@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:skillpp_kelas12/models/profil_model.dart';
-import 'package:skillpp_kelas12/screens/Login.dart';
+import 'package:skillpp_kelas12/screens/login.dart';
 import 'package:skillpp_kelas12/services/profil_service.dart';
 import 'package:skillpp_kelas12/widgets/edit_profil_dialog.dart';
 import 'package:skillpp_kelas12/services/login_service.dart';
