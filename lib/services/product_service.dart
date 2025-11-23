@@ -25,20 +25,31 @@ class ProductService {
         headers: headers,
       );
       
-      if (response.statusCode == 200) {
+      print('Products API Status: ${response.statusCode}');
+      print('Products API Response: ${response.body}');
+
+      // Status code success: 200, 201
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         final productResponse = ProductResponse.fromJson(data);
         return {
           'success': true,
           'data': productResponse,
         };
-      } else {
+      } else if (response.statusCode == 401) {
         return {
           'success': false,
-          'message': 'HTTP Error: ${response.statusCode}',
+          'message': 'Token tidak valid. Silakan login kembali.',
+        };
+      } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
         };
       }
     } catch (e) {
+      print('Products API Error: $e');
       return {
         'success': false,
         'message': 'Network Error: $e',
@@ -64,19 +75,27 @@ class ProductService {
         headers: headers,
       );
       
-      if (response.statusCode == 200) {
+      print('Categories API Status: ${response.statusCode}');
+      print('Categories API Response: ${response.body}');
+
+      // Status code success: 200, 201
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
-        print('Categories API Response: $data');
-        
         final categoryResponse = CategoryResponse.fromJson(data);
         return {
           'success': true,
           'data': categoryResponse,
         };
-      } else {
+      } else if (response.statusCode == 401) {
         return {
           'success': false,
-          'message': 'HTTP Error: ${response.statusCode}',
+          'message': 'Token tidak valid. Silakan login kembali.',
+        };
+      } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
         };
       }
     } catch (e) {
@@ -101,26 +120,39 @@ class ProductService {
         headers['Authorization'] = 'Bearer $token';
       }
 
+      print('Add Product Request: ${product.toJson()}');
+
       final response = await http.post(
         Uri.parse('$baseUrl/products/save'),
         headers: headers,
         body: json.encode(product.toJson()),
       );
 
-      if (response.statusCode == 200) {
+      print('Add Product Status: ${response.statusCode}');
+      print('Add Product Response: ${response.body}');
+
+      // Status code success: 200, 201
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         return {
-          'success': data['success'] ?? false,
+          'success': data['success'] ?? true,
           'message': data['message'] ?? 'Produk berhasil ditambahkan',
           'data': data['data'],
         };
-      } else {
+      } else if (response.statusCode == 401) {
         return {
           'success': false,
-          'message': 'HTTP Error: ${response.statusCode}',
+          'message': 'Token tidak valid. Silakan login kembali.',
+        };
+      } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
         };
       }
     } catch (e) {
+      print('Add Product Error: $e');
       return {
         'success': false,
         'message': 'Network Error: $e',
@@ -141,26 +173,39 @@ class ProductService {
         headers['Authorization'] = 'Bearer $token';
       }
 
+      print('Update Product Request: ${product.toJson()}');
+
       final response = await http.post(
         Uri.parse('$baseUrl/products/save'),
         headers: headers,
         body: json.encode(product.toJson()),
       );
 
-      if (response.statusCode == 200) {
+      print('Update Product Status: ${response.statusCode}');
+      print('Update Product Response: ${response.body}');
+
+      // Status code success: 200, 201
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         return {
-          'success': data['success'] ?? false,
+          'success': data['success'] ?? true,
           'message': data['message'] ?? 'Produk berhasil diupdate',
           'data': data['data'],
         };
-      } else {
+      } else if (response.statusCode == 401) {
         return {
           'success': false,
-          'message': 'HTTP Error: ${response.statusCode}',
+          'message': 'Token tidak valid. Silakan login kembali.',
+        };
+      } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
         };
       }
     } catch (e) {
+      print('Update Product Error: $e');
       return {
         'success': false,
         'message': 'Network Error: $e',
@@ -181,6 +226,8 @@ class ProductService {
         headers['Authorization'] = 'Bearer $token';
       }
 
+      print('Delete Product ID: $productId');
+
       final response = await http.post(
         Uri.parse('$baseUrl/products/delete'),
         headers: headers,
@@ -189,19 +236,30 @@ class ProductService {
         }),
       );
 
-      if (response.statusCode == 200) {
+      print('Delete Product Status: ${response.statusCode}');
+      print('Delete Product Response: ${response.body}');
+
+      // Status code success: 200, 201
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         return {
-          'success': data['success'] ?? false,
+          'success': data['success'] ?? true,
           'message': data['message'] ?? 'Produk berhasil dihapus',
         };
-      } else {
+      } else if (response.statusCode == 401) {
         return {
           'success': false,
-          'message': 'HTTP Error: ${response.statusCode}',
+          'message': 'Token tidak valid. Silakan login kembali.',
+        };
+      } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
         };
       }
     } catch (e) {
+      print('Delete Product Error: $e');
       return {
         'success': false,
         'message': 'Network Error: $e',
@@ -239,22 +297,35 @@ class ProductService {
         ));
       }
 
+      print('Upload Images for Product ID: $productId');
+      print('Image Paths: $imagePaths');
+
       final response = await request.send();
       final responseData = await response.stream.bytesToString();
       final Map<String, dynamic> data = json.decode(responseData);
 
-      if (response.statusCode == 200) {
+      print('Upload Images Status: ${response.statusCode}');
+      print('Upload Images Response: $responseData');
+
+      // Status code success: 200, 201
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return {
-          'success': data['success'] ?? false,
+          'success': data['success'] ?? true,
           'message': data['message'] ?? 'Gambar berhasil diupload',
+        };
+      } else if (response.statusCode == 401) {
+        return {
+          'success': false,
+          'message': 'Token tidak valid. Silakan login kembali.',
         };
       } else {
         return {
           'success': false,
-          'message': 'HTTP Error: ${response.statusCode}',
+          'message': data['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
         };
       }
     } catch (e) {
+      print('Upload Images Error: $e');
       return {
         'success': false,
         'message': 'Network Error: $e',
@@ -275,12 +346,18 @@ class ProductService {
         headers['Authorization'] = 'Bearer $token';
       }
 
+      print('Get Product by ID: $productId');
+
       final response = await http.get(
         Uri.parse('$baseUrl/products/$productId'),
         headers: headers,
       );
 
-      if (response.statusCode == 200) {
+      print('Get Product by ID Status: ${response.statusCode}');
+      print('Get Product by ID Response: ${response.body}');
+
+      // Status code success: 200, 201
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         if (data['success'] == true) {
           final product = Product.fromJson(data['data']);
@@ -294,13 +371,20 @@ class ProductService {
             'message': data['message'] ?? 'Produk tidak ditemukan',
           };
         }
-      } else {
+      } else if (response.statusCode == 401) {
         return {
           'success': false,
-          'message': 'HTTP Error: ${response.statusCode}',
+          'message': 'Token tidak valid. Silakan login kembali.',
+        };
+      } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
         };
       }
     } catch (e) {
+      print('Get Product by ID Error: $e');
       return {
         'success': false,
         'message': 'Network Error: $e',
@@ -308,134 +392,127 @@ class ProductService {
     }
   }
   
-  // Get product detail by ID dengan token - endpoint yang benar
-static Future<Map<String, dynamic>> getProductDetail(int productId) async {
-  try {
-    final String? token = await LoginService.getToken();
-    
-    final Map<String, String> headers = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
+  // Get product detail by ID dengan token
+  static Future<Map<String, dynamic>> getProductDetail(int productId) async {
+    try {
+      final String? token = await LoginService.getToken();
+      
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
 
-    print('Fetching product detail for ID: $productId');
-    print('Endpoint: $baseUrl/products/$productId/show');
-    
-    final response = await http.get(
-      Uri.parse('$baseUrl/products/$productId/show'), // Endpoint yang benar
-      headers: headers,
-    );
+      print('Fetching product detail for ID: $productId');
+      print('Endpoint: $baseUrl/products/$productId/show');
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/products/$productId/show'),
+        headers: headers,
+      );
 
-    print('Product Detail Status: ${response.statusCode}');
-    print('Product Detail Response: ${response.body}');
+      print('Product Detail Status: ${response.statusCode}');
+      print('Product Detail Response: ${response.body}');
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      if (data['success'] == true) {
-        final productDetailResponse = ProductDetailResponse.fromJson(data);
-        return {
-          'success': true,
-          'data': productDetailResponse,
-        };
-      } else {
+      // Status code success: 200, 201
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['success'] == true) {
+          final productDetailResponse = ProductDetailResponse.fromJson(data);
+          return {
+            'success': true,
+            'data': productDetailResponse,
+          };
+        } else {
+          return {
+            'success': false,
+            'message': data['message'] ?? 'Produk tidak ditemukan',
+          };
+        }
+      } else if (response.statusCode == 401) {
         return {
           'success': false,
-          'message': data['message'] ?? 'Produk tidak ditemukan',
-        };
-      }
-    } else if (response.statusCode == 404) {
-      return {
-        'success': false,
-        'message': 'Produk tidak ditemukan (404)',
-      };
-    } else if (response.statusCode == 401) {
-      return {
-        'success': false,
-        'message': 'Token tidak valid. Silakan login kembali.',
-      };
-    } else {
-      return {
-        'success': false,
-        'message': 'HTTP Error: ${response.statusCode} - ${response.body}',
-      };
-    }
-  } catch (e) {
-    print('Product Detail Error: $e');
-    return {
-      'success': false,
-      'message': 'Network Error: $e',
-    };
-  }
-}
-// Get product images by product ID
-static Future<Map<String, dynamic>> getProductImages(int productId) async {
-  try {
-    final String? token = await LoginService.getToken();
-    
-    final Map<String, String> headers = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
-
-    print('Fetching product images for ID: $productId');
-    print('Endpoint: $baseUrl/products/$productId/images');
-    
-    final response = await http.get(
-      Uri.parse('$baseUrl/products/$productId/images'),
-      headers: headers,
-    );
-
-    print('Product Images Status: ${response.statusCode}');
-    print('Product Images Response: ${response.body}');
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      if (data['success'] == true) {
-        // Parse list of images
-        final List<ProductImage> images = (data['data'] as List)
-            .map((imageJson) => ProductImage.fromJson(imageJson))
-            .toList();
-        
-        return {
-          'success': true,
-          'data': images,
+          'message': 'Token tidak valid. Silakan login kembali.',
         };
       } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
         return {
           'success': false,
-          'message': data['message'] ?? 'Gambar tidak ditemukan',
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
         };
       }
-    } else if (response.statusCode == 404) {
+    } catch (e) {
+      print('Product Detail Error: $e');
       return {
         'success': false,
-        'message': 'Gambar produk tidak ditemukan (404)',
-      };
-    } else if (response.statusCode == 401) {
-      return {
-        'success': false,
-        'message': 'Token tidak valid. Silakan login kembali.',
-      };
-    } else {
-      return {
-        'success': false,
-        'message': 'HTTP Error: ${response.statusCode} - ${response.body}',
+        'message': 'Network Error: $e',
       };
     }
-  } catch (e) {
-    print('Product Images Error: $e');
-    return {
-      'success': false,
-      'message': 'Network Error: $e',
-    };
   }
-}
-//
 
+  // Get product images by product ID
+  static Future<Map<String, dynamic>> getProductImages(int productId) async {
+    try {
+      final String? token = await LoginService.getToken();
+      
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
+      print('Fetching product images for ID: $productId');
+      print('Endpoint: $baseUrl/products/$productId/images');
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/products/$productId/images'),
+        headers: headers,
+      );
+
+      print('Product Images Status: ${response.statusCode}');
+      print('Product Images Response: ${response.body}');
+
+      // Status code success: 200, 201
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['success'] == true) {
+          // Parse list of images
+          final List<ProductImage> images = (data['data'] as List)
+              .map((imageJson) => ProductImage.fromJson(imageJson))
+              .toList();
+          
+          return {
+            'success': true,
+            'data': images,
+          };
+        } else {
+          return {
+            'success': false,
+            'message': data['message'] ?? 'Gambar tidak ditemukan',
+          };
+        }
+      } else if (response.statusCode == 401) {
+        return {
+          'success': false,
+          'message': 'Token tidak valid. Silakan login kembali.',
+        };
+      } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      print('Product Images Error: $e');
+      return {
+        'success': false,
+        'message': 'Network Error: $e',
+      };
+    }
+  }
 }

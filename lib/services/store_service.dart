@@ -28,7 +28,8 @@ class StoreService {
       print('Store API Status: ${response.statusCode}');
       print('Store API Response: ${response.body}');
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      // Status code success: 200, 201, 204
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         final Map<String, dynamic> data = json.decode(response.body);
         final storeResponse = StoreResponse.fromJson(data);
         return {
@@ -41,9 +42,10 @@ class StoreService {
           'message': 'Token tidak valid. Silakan login kembali.',
         };
       } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
         return {
           'success': false,
-          'message': 'HTTP Error: ${response.statusCode} - ${response.body}',
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
         };
       }
     } catch (e) {
@@ -93,6 +95,7 @@ class StoreService {
       print('Update Store Status: ${response.statusCode}');
       print('Update Store Response: ${response.body}');
 
+      // Status code success: 200, 201
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         return {
@@ -106,9 +109,10 @@ class StoreService {
           'message': 'Token tidak valid. Silakan login kembali.',
         };
       } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
         return {
           'success': false,
-          'message': 'HTTP Error: ${response.statusCode} - ${response.body}',
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
         };
       }
     } catch (e) {
@@ -119,53 +123,58 @@ class StoreService {
       };
     }
   }
-  // store_service.dart - Tambahkan method ini
-static Future<bool> hasStore() async {
-  try {
-    final result = await getStore();
-    return result['success'] == true;
-  } catch (e) {
-    return false;
-  }
-}
 
-// Tambahkan method untuk daftar toko
-static Future<Map<String, dynamic>> registerStore(Map<String, dynamic> storeData) async {
-  try {
-    final String? token = await LoginService.getToken();
-    
-    final Map<String, String> headers = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
+  static Future<bool> hasStore() async {
+    try {
+      final result = await getStore();
+      return result['success'] == true;
+    } catch (e) {
+      return false;
     }
+  }
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/stores/save'),
-      headers: headers,
-      body: json.encode(storeData),
-    );
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      return {
-        'success': data['success'] ?? false,
-        'message': data['message'] ?? 'Toko berhasil didaftarkan',
-        'data': data['data'],
+  // Tambahkan method untuk daftar toko
+  static Future<Map<String, dynamic>> registerStore(Map<String, dynamic> storeData) async {
+    try {
+      final String? token = await LoginService.getToken();
+      
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
       };
-    } else {
+      
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/stores/save'),
+        headers: headers,
+        body: json.encode(storeData),
+      );
+
+      print('Register Store Status: ${response.statusCode}');
+      print('Register Store Response: ${response.body}');
+
+      // Status code success: 200, 201
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        return {
+          'success': data['success'] ?? true,
+          'message': data['message'] ?? 'Toko berhasil didaftarkan',
+          'data': data['data'],
+        };
+      } else {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
       return {
         'success': false,
-        'message': 'HTTP Error: ${response.statusCode}',
+        'message': 'Network Error: $e',
       };
     }
-  } catch (e) {
-    return {
-      'success': false,
-      'message': 'Network Error: $e',
-    };
   }
-}
 }

@@ -14,7 +14,7 @@ class LoginService {
         body: jsonEncode(logindata.toJson()),
       );
       
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         
         if (data['token'] != null) {
