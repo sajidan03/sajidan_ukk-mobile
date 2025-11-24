@@ -223,11 +223,11 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               ElevatedButton(
                 onPressed: () => _registerStore(),
-                child: Text('Daftar Toko'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                 ),
+                child: Text('Daftar Toko'),
               ),
             ],
           );
@@ -734,14 +734,6 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildMenuTile(
-              'Riwayat Transaksi',
-              Icons.history,
-              Colors.purple,
-              () {
-                // Navigasi ke halaman riwayat transaksi
-              },
-            ),
             _buildMenuDivider(),
             _buildMenuTile(
               'Pengaturan Akun',
@@ -750,23 +742,6 @@ class _ProfilePageState extends State<ProfilePage> {
               _showEditProfileDialog,
             ),
             _buildMenuDivider(),
-            _buildMenuTile(
-              'Bantuan & Support',
-              Icons.help_outline,
-              Colors.green,
-              () {
-                // Navigasi ke halaman bantuan
-              },
-            ),
-            _buildMenuDivider(),
-            _buildMenuTile(
-              'Tentang Aplikasi',
-              Icons.info_outline,
-              Colors.blue,
-              () {
-                // Navigasi ke halaman tentang
-              },
-            ),
           ],
         ),
       ),

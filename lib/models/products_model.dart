@@ -133,7 +133,7 @@ class Product {
       idProduk: idProduk,
       namaProduk: namaProduk ?? this.namaProduk,
       idKategori: idKategori?.toString() ?? this.idKategori,
-      namaKategori: namaKategori ?? this.namaKategori,
+      namaKategori: namaKategori ?? namaKategori,
       harga: harga?.toString() ?? this.harga,
       stok: stok?.toString() ?? this.stok,
       deskripsi: deskripsi ?? this.deskripsi,

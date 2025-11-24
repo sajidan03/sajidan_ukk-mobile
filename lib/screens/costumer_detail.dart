@@ -496,7 +496,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                         ? () => setState(() => _quantity--)
                         : null,
                   ),
-                  Container(
+                  SizedBox(
                     width: 40,
                     child: Center(
                       child: Text(

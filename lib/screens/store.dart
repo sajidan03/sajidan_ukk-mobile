@@ -537,14 +537,7 @@ class _StorePageState extends State<StorePage> {
               _showEditStoreDialog,
             ),
             SizedBox(height: 12),
-            _buildActionButton(
-              'Statistik',
-              Icons.analytics,
-              Colors.purple,
-              () {
-                // Navigasi ke halaman statistik
-              },
-            ),
+          
           ],
         ),
       ],
