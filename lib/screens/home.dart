@@ -22,7 +22,7 @@ class _ProductListPageState extends State<ProductListPage> {
   String _errorMessage = '';
   int _currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
-
+  final Color primaryColor = const Color(0xFF3d3d7e);
   @override
   void initState() {
     super.initState();
@@ -177,13 +177,13 @@ class _ProductListPageState extends State<ProductListPage> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
-          'Toko Online',
+          'SA Market',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
-        backgroundColor: Colors.blue,
+        backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -212,7 +212,7 @@ class _ProductListPageState extends State<ProductListPage> {
             label: 'Profil',
           ),
         ],
-        selectedItemColor: Colors.blue,
+        selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
@@ -238,7 +238,7 @@ class _ProductListPageState extends State<ProductListPage> {
             label: 'Profil',
           ),
         ],
-        selectedItemColor: Colors.blue,
+        selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
@@ -263,7 +263,7 @@ class _ProductListPageState extends State<ProductListPage> {
           label: 'Profil',
         ),
       ],
-      selectedItemColor: Colors.blue,
+      selectedItemColor: primaryColor,
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
@@ -355,7 +355,7 @@ class _ProductListPageState extends State<ProductListPage> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               gradient: LinearGradient(
-                colors: [Colors.blue, Colors.lightBlue],
+                colors: [primaryColor, Colors.lightBlue],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -374,10 +374,10 @@ class _ProductListPageState extends State<ProductListPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Special Offer',
+                        'Menyediakan peralatan sekolah & makanan ringan, dengan harga pelajar!',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 20,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

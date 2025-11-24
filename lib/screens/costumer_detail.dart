@@ -22,6 +22,11 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
   int _selectedImageIndex = 0;
   int _quantity = 1;
 
+  // Warna tema baru
+  final Color primaryColor = const Color(0xFF3d3d7e);
+  final Color primaryLight = Color(0xFF3d3d7e).withOpacity(0.1);
+  final Color primaryDark = const Color(0xFF2a2a57);
+
   @override
   void initState() {
     super.initState();
@@ -241,8 +246,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        actions: [
-        ],
+        actions: [],
       ),
       body: _buildBody(),
       bottomNavigationBar: _product != null ? _buildBottomBar() : null,
@@ -320,7 +324,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
+                    color: primaryColor,
                   ),
                 ),
                 SizedBox(height: 16),
@@ -331,14 +335,14 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.blue[50],
+                        color: primaryLight,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue[200]!),
+                        border: Border.all(color: primaryColor.withOpacity(0.3)),
                       ),
                       child: Text(
                         _product!.namaKategori,
                         style: TextStyle(
-                          color: Colors.blue[700],
+                          color: primaryColor,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
@@ -410,13 +414,17 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                   Container(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      icon: Icon(Icons.photo_library),
-                      label: Text('Lihat Semua Gambar (${_product!.images.length})'),
+                      icon: Icon(Icons.photo_library, color: primaryColor),
+                      label: Text(
+                        'Lihat Semua Gambar (${_product!.images.length})',
+                        style: TextStyle(color: primaryColor),
+                      ),
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
+                        side: BorderSide(color: primaryColor),
                       ),
                       onPressed: _showImageGallery,
                     ),
@@ -571,7 +579,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _selectedImageIndex == index 
-                          ? Colors.blue 
+                          ? primaryColor 
                           : Colors.white.withOpacity(0.6),
                     ),
                   ),
@@ -603,8 +611,8 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: Colors.blue[100],
-                child: Icon(Icons.store, color: Colors.blue),
+                backgroundColor: primaryLight,
+                child: Icon(Icons.store, color: primaryColor),
               ),
               SizedBox(width: 12),
               Expanded(
@@ -635,7 +643,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
               icon: Icon(Icons.chat),
               label: Text('Chat via WhatsApp'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -649,86 +657,85 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
       ),
     );
   }
+
   Widget _buildBottomBar() {
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black12,
-          blurRadius: 6,
-          offset: Offset(0, -2),
-        )
-      ],
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: Offset(0, -2),
+          )
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
 
-        // ===============================
-        //  QTY SELECTOR
-        // ===============================
-        if (_product!.isAvailable)
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    if (_quantity > 1) {
-                      setState(() => _quantity--);
-                    }
-                  },
-                  child: Icon(Icons.remove, size: 22),
-                ),
-                SizedBox(width: 18),
-                Text(
-                  _quantity.toString(),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+          // QTY SELECTOR
+          if (_product!.isAvailable)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (_quantity > 1) {
+                        setState(() => _quantity--);
+                      }
+                    },
+                    child: Icon(Icons.remove, size: 22, color: primaryColor),
                   ),
-                ),
-                SizedBox(width: 18),
-                GestureDetector(
-                  onTap: () {
-                    if (_quantity < _product!.intStok) {
-                      setState(() => _quantity++);
-                    }
-                  },
-                  child: Icon(Icons.add, size: 22),
-                ),
-              ],
+                  SizedBox(width: 18),
+                  Text(
+                    _quantity.toString(),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: primaryColor,
+                    ),
+                  ),
+                  SizedBox(width: 18),
+                  GestureDetector(
+                    onTap: () {
+                      if (_quantity < _product!.intStok) {
+                        setState(() => _quantity++);
+                      }
+                    },
+                    child: Icon(Icons.add, size: 22, color: primaryColor),
+                  ),
+                ],
+              ),
+            ),
+
+          if (_product!.isAvailable) SizedBox(width: 12),
+
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: _contactSeller,
+              icon: Icon(Icons.chat_bubble_outline),
+              label: Text(
+                "Chat Penjual",
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                padding: EdgeInsets.symmetric(horizontal: 26, vertical: 14),
+                shape: StadiumBorder(),
+              ),
             ),
           ),
-
-        if (_product!.isAvailable) SizedBox(width: 12),
-
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: _contactSeller,
-            icon: Icon(Icons.chat_bubble_outline),
-            label: Text(
-              "Chat Penjual",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              padding: EdgeInsets.symmetric(horizontal: 26, vertical: 14),
-              shape: StadiumBorder(),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
+        ],
+      ),
+    );
+  }
 }
 
 extension ProductAvailability on Product {

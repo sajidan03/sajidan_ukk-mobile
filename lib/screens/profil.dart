@@ -30,6 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _kontakController = TextEditingController();
   final TextEditingController _alamatController = TextEditingController();
   String? _selectedImagePath;
+  final Color primaryColor = const Color(0xFF3d3d7e);
 
   @override
   void initState() {
@@ -329,7 +330,7 @@ void _logout() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profil Saya'),
-        backgroundColor: Colors.blue,
+        backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         actions: [
           if (_userData != null)
