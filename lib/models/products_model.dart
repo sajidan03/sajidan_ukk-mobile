@@ -70,24 +70,25 @@ class Product {
     this.id,
   });
 
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      idProduk: json['id_produk'] ?? 0,
-      namaProduk: json['nama_produk'] ?? '',
-      idKategori: json['id_kategori']?.toString() ?? '',
-      namaKategori: json['kategori'] ?? json['nama_kategori'] ?? '', // FIX: handle kedua field
-      harga: json['harga']?.toString() ?? '0',
-      stok: json['stok']?.toString() ?? '0',
-      deskripsi: json['deskripsi'] ?? '',
-      tanggalUpload: json['tanggal_upload'] ?? '',
-      toko: Toko.fromJson(json['toko'] ?? {}), // FIX: default empty map
-      images: json['images'] != null && json['images'] is List
-          ? List<ProductImage>.from(
-              (json['images'] as List).map((x) => ProductImage.fromJson(x)))
-          : [], // FIX: default empty list
-      id: json['id'] ?? json['id_produk'],
-    );
-  }
+factory Product.fromJson(Map<String, dynamic> json) {
+  return Product(
+    idProduk: json['id_produk'] ?? json['id'] ?? 0,
+    namaProduk: json['nama_produk'] ?? '',
+    idKategori: json['id_kategori']?.toString() ?? '',
+    namaKategori: json['kategori'] ?? json['nama_kategori'] ?? '',
+    harga: json['harga']?.toString() ?? '0',
+    stok: json['stok']?.toString() ?? '0',
+    deskripsi: json['deskripsi'] ?? '',
+    tanggalUpload: json['tanggal_upload'] ?? '',
+    toko: Toko.fromJson(json['toko'] ?? {}),
+    images: (json['images'] is List)
+        ? List<ProductImage>.from(
+            json['images'].map((x) => ProductImage.fromJson(x)))
+        : [],
+    id: json['id'] ?? json['id_produk'],
+  );
+}
+
 
   // Convert to JSON for API requests
   Map<String, dynamic> toJson() {
@@ -245,6 +246,7 @@ class ProductDetailResponse {
   }
 }
 
+
 class CategoryResponse {
   final bool success;
   final String message;
@@ -287,4 +289,6 @@ class Category {
       'nama_kategori': nama,
     };
   }
+  
 }
+

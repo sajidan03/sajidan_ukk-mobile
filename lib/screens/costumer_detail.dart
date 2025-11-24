@@ -40,10 +40,12 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
       _isLoading = false;
       
       if (result['success'] == true) {
-        final productDetailResponse = result['data'] as ProductDetailResponse;
-        _product = productDetailResponse.data;
+        _product = result['data'] as Product;
+        print('Product loaded: ${_product!.namaProduk}');
+        print('Images count: ${_product!.images.length}');
       } else {
         _errorMessage = result['message'] ?? 'Terjadi kesalahan';
+        print('Error: $_errorMessage');
       }
     });
   }
@@ -52,7 +54,6 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
     if (_product == null) return;
     
     final phoneNumber = _product!.toko.kontak;
-    final productName = _product!.namaProduk;
     final message = 'Halo, saya tertarik dengan produk ${_product!.namaProduk} yang Anda jual. Bisa info lebih lanjut?';
     
     final url = 'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
@@ -76,6 +77,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.all(20),
         child: Stack(
           children: [
             Container(
@@ -84,7 +86,7 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: DecorationImage(
-                  image: NetworkImage(_product!.images[index].url),
+                  image: NetworkImage(_product!.images[index].imageUrl),
                   fit: BoxFit.contain,
                 ),
               ),
@@ -104,6 +106,127 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                 onPressed: () => Navigator.pop(context),
               ),
             ),
+            if (_product!.images.length > 1) ...[
+              Positioned(
+                left: 10,
+                top: 0,
+                bottom: 0,
+                child: IconButton(
+                  icon: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.chevron_left, color: Colors.white, size: 24),
+                  ),
+                  onPressed: index > 0 ? () {
+                    Navigator.pop(context);
+                    _showImageDialog(index - 1);
+                  } : null,
+                ),
+              ),
+              Positioned(
+                right: 10,
+                top: 0,
+                bottom: 0,
+                child: IconButton(
+                  icon: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.chevron_right, color: Colors.white, size: 24),
+                  ),
+                  onPressed: index < _product!.images.length - 1 ? () {
+                    Navigator.pop(context);
+                    _showImageDialog(index + 1);
+                  } : null,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showImageGallery() {
+    if (_product == null || _product!.images.isEmpty) return;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Galeri Produk (${_product!.images.length})',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: GridView.builder(
+                padding: EdgeInsets.all(16),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                itemCount: _product!.images.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showImageDialog(index);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          _product!.images[index].imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey[200],
+                              child: Icon(Icons.broken_image, color: Colors.grey[400]),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -113,6 +236,22 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Detail Produk'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.favorite_border),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: Icon(Icons.share),
+            onPressed: () {},
+          ),
+        ],
+      ),
       body: _buildBody(),
       bottomNavigationBar: _product != null ? _buildBottomBar() : null,
     );
@@ -163,29 +302,14 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
       );
     }
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          expandedHeight: 300,
-          flexibleSpace: _buildProductImages(),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
-          pinned: true,
-          actions: [
-            IconButton(
-              icon: Icon(Icons.favorite_border),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: Icon(Icons.share),
-              onPressed: () {},
-            ),
-          ],
-        ),
-
-        SliverToBoxAdapter(
-          child: Padding(
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Product Images
+          _buildProductImages(),
+          
+          // Product Details
+          Padding(
             padding: EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,6 +413,25 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
                 ),
                 SizedBox(height: 16),
 
+                // Gallery Button
+                if (_product!.images.isNotEmpty) ...[
+                  Container(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: Icon(Icons.photo_library),
+                      label: Text('Lihat Semua Gambar (${_product!.images.length})'),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: _showImageGallery,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                ],
+
                 // Deskripsi
                 Text(
                   'Deskripsi Produk',
@@ -310,18 +453,19 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
 
                 // Info Toko
                 _buildStoreInfo(),
-                SizedBox(height: 24),
+                SizedBox(height: 80), // Extra space for bottom navigation
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildProductImages() {
     if (_product!.images.isEmpty) {
       return Container(
+        height: 300,
         color: Colors.grey[200],
         child: Center(
           child: Column(
@@ -342,60 +486,108 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
       );
     }
 
-    return Stack(
-      children: [
-        PageView.builder(
-          itemCount: _product!.images.length,
-          onPageChanged: (index) {
-            setState(() {
-              _selectedImageIndex = index;
-            });
-          },
-          itemBuilder: (context, index) {
-            return GestureDetector(
-              onTap: () => _showImageDialog(index),
-              child: Container(
-                color: Colors.white,
-                child: Image.network(
-                  _product!.images[index].url,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[200],
-                      child: Icon(Icons.broken_image, size: 60, color: Colors.grey[400]),
-                    );
-                  },
-                ),
-              ),
-            );
-          },
-        ),
-
-        // Indicator
-        if (_product!.images.length > 1)
-          Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _product!.images.length,
-                (index) => Container(
-                  width: 8,
-                  height: 8,
-                  margin: EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _selectedImageIndex == index 
-                        ? Colors.blue 
-                        : Colors.white.withOpacity(0.6),
+    return Container(
+      height: 300,
+      child: Stack(
+        children: [
+          PageView.builder(
+            itemCount: _product!.images.length,
+            onPageChanged: (index) {
+              setState(() {
+                _selectedImageIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () => _showImageDialog(index),
+                child: Container(
+                  color: Colors.white,
+                  child: Image.network(
+                    _product!.images[index].imageUrl,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded / 
+                                loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey[200],
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.broken_image, size: 60, color: Colors.grey[400]),
+                            SizedBox(height: 8),
+                            Text(
+                              'Gagal memuat gambar',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
+                ),
+              );
+            },
+          ),
+
+          // Image Counter
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${_selectedImageIndex + 1}/${_product!.images.length}',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
           ),
-      ],
+
+          // Indicator
+          if (_product!.images.length > 1)
+            Positioned(
+              bottom: 16,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  _product!.images.length,
+                  (index) => Container(
+                    width: 8,
+                    height: 8,
+                    margin: EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _selectedImageIndex == index 
+                          ? Colors.blue 
+                          : Colors.white.withOpacity(0.6),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -465,77 +657,88 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
       ),
     );
   }
-
   Widget _buildBottomBar() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Quantity Selector
-          if (_product!.isAvailable) ...[
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.remove, size: 18),
-                    onPressed: _quantity > 1 
-                        ? () => setState(() => _quantity--)
-                        : null,
-                  ),
-                  SizedBox(
-                    width: 40,
-                    child: Center(
-                      child: Text(
-                        _quantity.toString(),
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add, size: 18),
-                    onPressed: _quantity < _product!.intStok
-                        ? () => setState(() => _quantity++)
-                        : null,
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 12),
-          ],
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black12,
+          blurRadius: 6,
+          offset: Offset(0, -2),
+        )
+      ],
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
 
-          Expanded(
-            child: ElevatedButton.icon(
-              icon: Icon(Icons.chat),
-              label: Text('Chat Penjual'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 12),
-              ),
-              onPressed: _product!.isAvailable ? _contactSeller : null,
+        // ===============================
+        //  QTY SELECTOR
+        // ===============================
+        if (_product!.isAvailable)
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    if (_quantity > 1) {
+                      setState(() => _quantity--);
+                    }
+                  },
+                  child: Icon(Icons.remove, size: 22),
+                ),
+                SizedBox(width: 18),
+                Text(
+                  _quantity.toString(),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(width: 18),
+                GestureDetector(
+                  onTap: () {
+                    if (_quantity < _product!.intStok) {
+                      setState(() => _quantity++);
+                    }
+                  },
+                  child: Icon(Icons.add, size: 22),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
+
+        if (_product!.isAvailable) SizedBox(width: 12),
+
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: _contactSeller,
+            icon: Icon(Icons.chat_bubble_outline),
+            label: Text(
+              "Chat Penjual",
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              padding: EdgeInsets.symmetric(horizontal: 26, vertical: 14),
+              shape: StadiumBorder(),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
-// Extension untuk Product
+}
+
 extension ProductAvailability on Product {
   bool get isAvailable => intStok > 0;
 }

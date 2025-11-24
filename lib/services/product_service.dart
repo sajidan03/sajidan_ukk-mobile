@@ -26,7 +26,6 @@ class ProductService {
       print('Products API Status: ${response.statusCode}');
       print('Products API Response: ${response.body}');
 
-      // Status code success: 200, 201
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         final productResponse = ProductResponse.fromJson(data);
@@ -55,7 +54,6 @@ class ProductService {
     }
   }
 
-  // Get categories dengan token
   static Future<Map<String, dynamic>> getCategories() async {
     try {
       final String? token = await LoginService.getToken();
@@ -76,7 +74,6 @@ class ProductService {
       print('Categories API Status: ${response.statusCode}');
       print('Categories API Response: ${response.body}');
 
-      // Status code success: 200, 201
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         final categoryResponse = CategoryResponse.fromJson(data);
@@ -105,7 +102,6 @@ class ProductService {
     }
   }
 
-  // Add new product dengan token
   static Future<Map<String, dynamic>> addProduct(Product product) async {
     try {
       final String? token = await LoginService.getToken();
@@ -129,7 +125,6 @@ class ProductService {
       print('Add Product Status: ${response.statusCode}');
       print('Add Product Response: ${response.body}');
 
-      // Status code success: 200, 201
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         return {
@@ -158,7 +153,6 @@ class ProductService {
     }
   }
 
-  // Update product dengan token
   static Future<Map<String, dynamic>> updateProduct(Product product) async {
     try {
       final String? token = await LoginService.getToken();
@@ -182,7 +176,6 @@ class ProductService {
       print('Update Product Status: ${response.statusCode}');
       print('Update Product Response: ${response.body}');
 
-      // Status code success: 200, 201
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         return {
@@ -227,7 +220,7 @@ class ProductService {
       print('Endpoint: $baseUrl/products/$productId/delete');
 
       final response = await http.post(
-        Uri.parse('$baseUrl/products/$productId/delete'), // ENDPOINT YANG BENAR
+        Uri.parse('$baseUrl/products/$productId/delete'),
         headers: headers,
         body: json.encode({
           'id': productId,
@@ -237,7 +230,6 @@ class ProductService {
       print('Delete Product Status: ${response.statusCode}');
       print('Delete Product Response: ${response.body}');
 
-      // Status code success: 200, 201
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         return {
@@ -265,7 +257,6 @@ class ProductService {
     }
   }
 
-  // Upload product images dengan token
   static Future<Map<String, dynamic>> uploadImages(
     int productId, 
     List<String> imagePaths
@@ -278,16 +269,13 @@ class ProductService {
         Uri.parse('$baseUrl/products/images/upload')
       );
 
-      // Add headers dengan token
       request.headers['Content-Type'] = 'multipart/form-data';
       if (token != null) {
         request.headers['Authorization'] = 'Bearer $token';
       }
 
-      // Add product ID
       request.fields['id_produk'] = productId.toString();
 
-      // Add images
       for (var imagePath in imagePaths) {
         request.files.add(await http.MultipartFile.fromPath(
           'images[]', 
@@ -305,7 +293,6 @@ class ProductService {
       print('Upload Images Status: ${response.statusCode}');
       print('Upload Images Response: $responseData');
 
-      // Status code success: 200, 201
       if (response.statusCode == 200 || response.statusCode == 201) {
         return {
           'success': data['success'] ?? true,
@@ -331,7 +318,6 @@ class ProductService {
     }
   }
 
-  // Get single product by ID dengan token
   static Future<Map<String, dynamic>> getProductById(int productId) async {
     try {
       final String? token = await LoginService.getToken();
@@ -354,7 +340,6 @@ class ProductService {
       print('Get Product by ID Status: ${response.statusCode}');
       print('Get Product by ID Response: ${response.body}');
 
-      // Status code success: 200, 201
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         if (data['success'] == true) {
@@ -390,7 +375,7 @@ class ProductService {
     }
   }
   
-  // Get product detail by ID dengan token
+  // Get product detail by ID dengan endpoint yang benar
   static Future<Map<String, dynamic>> getProductDetail(int productId) async {
     try {
       final String? token = await LoginService.getToken();
@@ -404,24 +389,23 @@ class ProductService {
       }
 
       print('Fetching product detail for ID: $productId');
-      print('Endpoint: $baseUrl/products/$productId/show');
+      print('Endpoint: $baseUrl/products/$productId/show'); // ENDPOINT YANG BENAR
       
       final response = await http.get(
-        Uri.parse('$baseUrl/products/$productId/show'),
+        Uri.parse('$baseUrl/products/$productId/show'), // ENDPOINT YANG BENAR
         headers: headers,
       );
 
       print('Product Detail Status: ${response.statusCode}');
       print('Product Detail Response: ${response.body}');
 
-      // Status code success: 200, 201
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         if (data['success'] == true) {
-          final productDetailResponse = ProductDetailResponse.fromJson(data);
+          final product = Product.fromJson(data['data']);
           return {
             'success': true,
-            'data': productDetailResponse,
+            'data': product,
           };
         } else {
           return {
@@ -474,11 +458,9 @@ class ProductService {
       print('Product Images Status: ${response.statusCode}');
       print('Product Images Response: ${response.body}');
 
-      // Status code success: 200, 201
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
         if (data['success'] == true) {
-          // Parse list of images
           final List<ProductImage> images = (data['data'] as List)
               .map((imageJson) => ProductImage.fromJson(imageJson))
               .toList();
