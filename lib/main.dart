@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:skillpp_kelas12/screens/login.dart';
-// import 'package:skillpp_kelas12/screens/contoh.dart';
 
 void main() {
   runApp(const MainApp());
