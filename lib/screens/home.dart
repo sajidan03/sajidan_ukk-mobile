@@ -16,17 +16,25 @@ class ProductListPage extends StatefulWidget {
 
 class _ProductListPageState extends State<ProductListPage> {
   List<Product> _products = [];
+  List<Product> _filteredProducts = [];
+  List<dynamic> _categories = []; // Changed to dynamic
   bool _isLoading = true;
+  bool _isLoadingCategories = true;
   bool _isCheckingStore = true;
   bool _hasStore = false;
   String _errorMessage = '';
+  String _categoryErrorMessage = '';
   int _currentIndex = 0;
+  int? _selectedCategoryId;
+  String _selectedCategoryName = 'Semua Kategori';
   final TextEditingController _searchController = TextEditingController();
   final Color primaryColor = const Color(0xFF3d3d7e);
+
   @override
   void initState() {
     super.initState();
     _checkStoreStatus();
+    _loadCategories();
     _loadProducts();
   }
 
@@ -43,13 +51,62 @@ class _ProductListPageState extends State<ProductListPage> {
     });
   }
 
-  Future<void> _loadProducts() async {
+  Future<void> _loadCategories() async {
+    setState(() {
+      _isLoadingCategories = true;
+      _categoryErrorMessage = '';
+    });
+
+    final result = await ProductService.getCategories();
+
+    setState(() {
+      _isLoadingCategories = false;
+      
+      if (result['success'] == true) {
+        // Add "All Categories" option first
+        _categories = [
+          {'id_kategori': null, 'nama_kategori': 'Semua Kategori'}
+        ];
+        // Add API categories
+        _categories.addAll(result['data'] as List<dynamic>);
+      } else {
+        _categoryErrorMessage = result['message'] ?? 'Gagal memuat kategori';
+        // Fallback to static categories if API fails
+        _categories = [
+          {'id_kategori': null, 'nama_kategori': 'Semua Kategori'},
+          {'id_kategori': 5, 'nama_kategori': 'Aksesoris'},
+          {'id_kategori': 8, 'nama_kategori': 'Alat Musik'},
+          {'id_kategori': 4, 'nama_kategori': 'ATK'},
+          {'id_kategori': 2, 'nama_kategori': 'Buku'},
+          {'id_kategori': 1, 'nama_kategori': 'Elektronik'},
+          {'id_kategori': 7, 'nama_kategori': 'Hardware'},
+          {'id_kategori': 9, 'nama_kategori': 'Kamera'},
+          {'id_kategori': 10, 'nama_kategori': 'Perabot Sekolah'},
+          {'id_kategori': 3, 'nama_kategori': 'Seragam'},
+          {'id_kategori': 6, 'nama_kategori': 'Software'},
+        ];
+        
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Kategori: $_categoryErrorMessage - Menggunakan data fallback'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        });
+      }
+    });
+  }
+
+  Future<void> _loadProducts({int? categoryId}) async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
-    final result = await ProductService.getProducts();
+    final result = categoryId != null 
+        ? await ProductService.getProductsByCategory(categoryId)
+        : await ProductService.getProducts();
 
     setState(() {
       _isLoading = false;
@@ -57,10 +114,10 @@ class _ProductListPageState extends State<ProductListPage> {
       if (result['success'] == true) {
         final productResponse = result['data'] as ProductResponse;
         _products = productResponse.data;
+        _filteredProducts = List.from(_products);
       } else {
         _errorMessage = result['message'] ?? 'Terjadi kesalahan';
         
-        // Tampilkan snackbar error jika perlu
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -73,16 +130,26 @@ class _ProductListPageState extends State<ProductListPage> {
     });
   }
 
+  void _filterByCategory(int? categoryId, String categoryName) {
+    setState(() {
+      _selectedCategoryId = categoryId;
+      _selectedCategoryName = categoryName;
+      _searchController.clear(); // Clear search when changing category
+    });
+
+    _loadProducts(categoryId: categoryId);
+  }
+
   void _searchProducts(String query) {
     setState(() {
       if (query.isEmpty) {
-        _loadProducts();
+        _filteredProducts = List.from(_products);
       } else {
-        final filteredProducts = _products.where((product) =>
+        _filteredProducts = _products.where((product) =>
             product.namaProduk.toLowerCase().contains(query.toLowerCase()) ||
             product.deskripsi.toLowerCase().contains(query.toLowerCase()) ||
-            product.namaKategori.toLowerCase().contains(query.toLowerCase())).toList();
-        _products = filteredProducts;
+            product.namaKategori.toLowerCase().contains(query.toLowerCase())
+        ).toList();
       }
     });
   }
@@ -97,10 +164,8 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   void _contactSeller(String phoneNumber) async {
-    // Format nomor telepon (hapus karakter non-digit)
     String formattedPhone = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
     
-    // Pastikan nomor diawali dengan 62 (kode Indonesia)
     if (formattedPhone.startsWith('0')) {
       formattedPhone = '62${formattedPhone.substring(1)}';
     } else if (!formattedPhone.startsWith('62')) {
@@ -138,19 +203,17 @@ class _ProductListPageState extends State<ProductListPage> {
     switch (index) {
       case 0: // Beranda
         break;
-      case 1: // Toko Saya - hanya jika punya toko
+      case 1: // Toko Saya
         if (_hasStore) {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => StorePage()),
           );
         } else {
-          // Arahkan ke profil untuk daftar toko
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => ProfilePage()),
           );
-          // Tampilkan snackbar info
           WidgetsBinding.instance.addPostFrameCallback((_) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -193,7 +256,6 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Widget _buildBottomNavigationBar() {
-    // Jika masih checking store status, tampilkan loading
     if (_isCheckingStore) {
       return BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -219,7 +281,6 @@ class _ProductListPageState extends State<ProductListPage> {
       );
     }
 
-    // Jika sudah punya toko, tampilkan semua menu
     if (_hasStore) {
       return BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -245,7 +306,6 @@ class _ProductListPageState extends State<ProductListPage> {
       );
     }
 
-    // Jika belum punya toko, sembunyikan menu "Toko Saya"
     return BottomNavigationBar(
       currentIndex: _currentIndex,
       onTap: _onTabTapped,
@@ -277,7 +337,7 @@ class _ProductListPageState extends State<ProductListPage> {
       );
     }
 
-    if (_errorMessage.isNotEmpty) {
+    if (_errorMessage.isNotEmpty && _filteredProducts.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -291,7 +351,7 @@ class _ProductListPageState extends State<ProductListPage> {
             ),
             SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _loadProducts,
+              onPressed: () => _loadProducts(categoryId: _selectedCategoryId),
               child: Text('Coba Lagi'),
             ),
           ],
@@ -299,7 +359,7 @@ class _ProductListPageState extends State<ProductListPage> {
       );
     }
 
-    if (_products.isEmpty) {
+    if (_filteredProducts.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -309,6 +369,16 @@ class _ProductListPageState extends State<ProductListPage> {
             Text(
               'Tidak ada produk tersedia',
               style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Kategori: $_selectedCategoryName',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => _filterByCategory(null, 'Semua Kategori'),
+              child: Text('Lihat Semua Produk'),
             ),
           ],
         ),
@@ -345,6 +415,11 @@ class _ProductListPageState extends State<ProductListPage> {
               ),
             ),
           ),
+        ),
+
+        // Filter Kategori
+        SliverToBoxAdapter(
+          child: _buildCategoryFilter(),
         ),
 
         // Banner Promosi
@@ -401,13 +476,34 @@ class _ProductListPageState extends State<ProductListPage> {
         SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text(
-              '🛍️ Semua Produk',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '🛍️ Semua Produk',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                if (_selectedCategoryId != null)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      _selectedCategoryName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: primaryColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -424,14 +520,65 @@ class _ProductListPageState extends State<ProductListPage> {
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                final product = _products[index];
+                final product = _filteredProducts[index];
                 return _buildProductCard(product);
               },
-              childCount: _products.length,
+              childCount: _filteredProducts.length,
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCategoryFilter() {
+    if (_isLoadingCategories) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    return Container(
+      height: 50,
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _categories.length,
+        itemBuilder: (context, index) {
+          final category = _categories[index];
+          final categoryId = category['id_kategori'];
+          final categoryName = category['nama_kategori'];
+          final isSelected = _selectedCategoryId == categoryId;
+          
+          return Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(
+                categoryName,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isSelected ? Colors.white : Colors.grey[700],
+                ),
+              ),
+              selected: isSelected,
+              onSelected: (selected) {
+                _filterByCategory(categoryId, categoryName);
+              },
+              backgroundColor: Colors.white,
+              selectedColor: primaryColor,
+              checkmarkColor: Colors.white,
+              shape: StadiumBorder(
+                side: BorderSide(
+                  color: isSelected ? primaryColor : Colors.grey[300]!,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 

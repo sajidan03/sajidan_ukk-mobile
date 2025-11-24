@@ -54,54 +54,34 @@ class ProductService {
     }
   }
 
-  static Future<Map<String, dynamic>> getCategories() async {
-    try {
-      final String? token = await LoginService.getToken();
-      
-      final Map<String, String> headers = {
+static Future<Map<String, dynamic>> getCategories() async {
+  try {
+    final response = await http.get(
+      Uri.parse('https://learncode.biz.id/api/categories'),
+      headers: {
         'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return {
+        'success': true,
+        'data': data['data'], // List kategori
       };
-      
-      if (token != null) {
-        headers['Authorization'] = 'Bearer $token';
-      }
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/categories'),
-        headers: headers,
-      );
-      
-      print('Categories API Status: ${response.statusCode}');
-      print('Categories API Response: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        final categoryResponse = CategoryResponse.fromJson(data);
-        return {
-          'success': true,
-          'data': categoryResponse,
-        };
-      } else if (response.statusCode == 401) {
-        return {
-          'success': false,
-          'message': 'Token tidak valid. Silakan login kembali.',
-        };
-      } else {
-        final Map<String, dynamic> errorData = json.decode(response.body);
-        return {
-          'success': false,
-          'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
-        };
-      }
-    } catch (e) {
-      print('Categories API Error: $e');
+    } else {
       return {
         'success': false,
-        'message': 'Network Error: $e',
+        'message': 'Failed to load categories: ${response.statusCode}',
       };
     }
+  } catch (e) {
+    return {
+      'success': false,
+      'message': 'Error: $e',
+    };
   }
-
+}
   static Future<Map<String, dynamic>> addProduct(Product product) async {
     try {
       final String? token = await LoginService.getToken();
@@ -495,4 +475,32 @@ class ProductService {
       };
     }
   }
+static Future<Map<String, dynamic>> getProductsByCategory(int categoryId) async {
+  try {
+    final response = await http.get(
+      Uri.parse('https://learncode.biz.id/api/products/category/$categoryId'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return {
+        'success': true,
+        'data': ProductResponse.fromJson(data),
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'Failed to load products: ${response.statusCode}',
+      };
+    }
+  } catch (e) {
+    return {
+      'success': false,
+      'message': 'Error: $e',
+    };
+  }
+}
 }
