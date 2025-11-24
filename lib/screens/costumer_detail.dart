@@ -243,8 +243,8 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Detail Produk'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
         elevation: 0,
         actions: [],
       ),

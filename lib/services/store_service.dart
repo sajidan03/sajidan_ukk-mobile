@@ -235,4 +235,38 @@ static Future<Map<String, dynamic>> deleteStore(int storeId) async {
     };
   }
 }
+  //
+  // Tambahkan di StoreService
+static Future<Map<String, dynamic>> getCategories() async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/categories'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    print('Categories API Status: ${response.statusCode}');
+    print('Categories API Response: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      return {
+        'success': true,
+        'data': data['data'], // List kategori langsung dari API
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'Gagal memuat kategori: ${response.statusCode}',
+      };
+    }
+  } catch (e) {
+    print('Categories API Error: $e');
+    return {
+      'success': false,
+      'message': 'Network Error: $e',
+    };
+  }
+}
 }

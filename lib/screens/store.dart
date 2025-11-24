@@ -20,6 +20,7 @@ class _StorePageState extends State<StorePage> {
   bool _isLoadingProducts = true;
   String _errorMessage = '';
   String _productsErrorMessage = '';
+  final Color primaryColor = const Color(0xFF3d3d7e);
 
   @override
   void initState() {
@@ -319,7 +320,7 @@ class _StorePageState extends State<StorePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Toko Saya'),
-        backgroundColor: Colors.blue,
+        backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         actions: [
           IconButton(

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:skillpp_kelas12/models/products_model.dart';
-import 'package:skillpp_kelas12/services/product_service.dart';
+import 'package:skillpp_kelas12/services/store_service.dart'; // Import StoreService
 
 class ProductFormDialog extends StatefulWidget {
   final Product? product;
@@ -29,7 +29,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   
   int _selectedKategori = 1;
   final List<String> _selectedImages = [];
-  List<Category> _categories = [];
+  List<Map<String, dynamic>> _categories = [];
   bool _isLoadingCategories = true;
   String _categoriesError = '';
 
@@ -52,27 +52,49 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       _categoriesError = '';
     });
 
-    final result = await ProductService.getCategories();
+    final result = await StoreService.getCategories();
 
     setState(() {
       _isLoadingCategories = false;
       
       if (result['success'] == true) {
-        final categoryResponse = result['data'] as CategoryResponse;
-        _categories = categoryResponse.data;
+        // Data langsung dari API response
+        _categories = (result['data'] as List).cast<Map<String, dynamic>>();
         
-        if (_categories.isNotEmpty && widget.product == null) {
-          _selectedKategori = _categories.first.id;
+        print('Loaded ${_categories.length} categories');
+        
+        // Set default selected category
+        if (_categories.isNotEmpty) {
+          if (widget.product == null) {
+            // For new product, select first category
+            _selectedKategori = _categories.first['id_kategori'];
+          } else {
+            // For editing, ensure the product's category exists in the list
+            final productCategoryExists = _categories.any(
+              (cat) => cat['id_kategori'] == widget.product!.intIdKategori
+            );
+            if (!productCategoryExists && _categories.isNotEmpty) {
+              _selectedKategori = _categories.first['id_kategori'];
+            }
+          }
         }
       } else {
         _categoriesError = result['message'] ?? 'Gagal memuat kategori';
-        _categories = [
-          Category(id: 1, nama: 'Elektronik'),
-          Category(id: 2, nama: 'Pakaian'),
-          Category(id: 3, nama: 'Buku'),
-          Category(id: 4, nama: 'Olahraga'),
-          Category(id: 5, nama: 'Lainnya'),
-        ];
+        // Fallback categories
+        // _categories = [
+        //   {'id_kategori': 1, 'nama_kategori': 'Elektronik'},
+        //   {'id_kategori': 2, 'nama_kategori': 'Buku'},
+        //   {'id_kategori': 3, 'nama_kategori': 'Seragam'},
+        //   {'id_kategori': 4, 'nama_kategori': 'ATK'},
+        //   {'id_kategori': 5, 'nama_kategori': 'Aksesoris'},
+        // ];
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Menggunakan kategori default'),
+            backgroundColor: Colors.orange,
+          ),
+        );
       }
     });
   }
@@ -217,15 +239,19 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                           ),
                         )
                       : DropdownButtonFormField<int>(
-                          initialValue: _selectedKategori,
+                          value: _selectedKategori,
                           decoration: InputDecoration(
                             labelText: 'Kategori',
                             border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
                           items: _categories.map((category) {
+                            final categoryId = category['id_kategori'] as int;
+                            final categoryName = category['nama_kategori'] as String;
+                            
                             return DropdownMenuItem<int>(
-                              value: category.id,
-                              child: Text(category.nama),
+                              value: categoryId,
+                              child: Text(categoryName),
                             );
                           }).toList(),
                           onChanged: (value) {
