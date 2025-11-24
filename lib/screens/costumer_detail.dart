@@ -242,14 +242,6 @@ class _CustomerProductDetailPageState extends State<CustomerProductDetailPage> {
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: Icon(Icons.favorite_border),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.share),
-            onPressed: () {},
-          ),
         ],
       ),
       body: _buildBody(),
