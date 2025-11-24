@@ -177,4 +177,62 @@ class StoreService {
       };
     }
   }
+  // Method untuk menghapus toko
+static Future<Map<String, dynamic>> deleteStore(int storeId) async {
+  try {
+    final String? token = await LoginService.getToken();
+    
+    if (token == null) {
+      return {
+        'success': false,
+        'message': 'Token tidak ditemukan. Silakan login kembali.',
+      };
+    }
+
+    print('Deleting store with ID: $storeId');
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/stores/$storeId/delete'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('Delete Store Status: ${response.statusCode}');
+    print('Delete Store Response: ${response.body}');
+
+    // Status code success: 200, 201, 204
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      return {
+        'success': data['success'] ?? true,
+        'message': data['message'] ?? 'Toko berhasil dihapus',
+        'data': data['data'] ?? data,
+      };
+    } else if (response.statusCode == 401) {
+      return {
+        'success': false,
+        'message': 'Token tidak valid. Silakan login kembali.',
+      };
+    } else if (response.statusCode == 404) {
+      return {
+        'success': false,
+        'message': 'Toko tidak ditemukan.',
+      };
+    } else {
+      final Map<String, dynamic> errorData = json.decode(response.body);
+      return {
+        'success': false,
+        'message': errorData['message'] ?? 'Terjadi kesalahan: ${response.statusCode}',
+      };
+    }
+  } catch (e) {
+    print('Delete Store Error: $e');
+    return {
+      'success': false,
+      'message': 'Network Error: $e',
+    };
+  }
+}
 }

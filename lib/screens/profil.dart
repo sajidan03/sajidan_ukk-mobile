@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:skillpp_kelas12/models/store_model.dart';
+import 'package:skillpp_kelas12/screens/login.dart';
+import 'package:skillpp_kelas12/screens/store.dart';
 import 'package:skillpp_kelas12/services/login_service.dart';
 import 'package:skillpp_kelas12/services/store_service.dart';
 import 'package:skillpp_kelas12/widgets/edit_profil_dialog.dart';
@@ -290,31 +292,37 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void _logout() async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Konfirmasi Logout'),
-        content: Text('Yakin ingin logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await LoginService.logout();
-              if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-              }
-            },
-            child: Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
+void _logout() {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Konfirmasi Logout'),
+      content: Text('Yakin ingin logout?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Batal'),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.pop(context);
+            
+            if (mounted) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => Login()),
+                (route) => false,
+              );
+            }
+            
+            LoginService.logout();
+          },
+          child: Text('Logout', style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -645,7 +653,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () {
-                    Navigator.pushNamed(context, '/store');
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => StorePage()));
                   },
                 ),
               ),

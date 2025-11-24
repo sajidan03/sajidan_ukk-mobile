@@ -4,12 +4,12 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginService {
-  static const String URL = 'http://learncode.biz.id/api';
+  static const String baseUrl = 'https://learncode.biz.id/api';
   
   static Future<Map<String, dynamic>> login(LoginModel logindata) async {
     try {
       final response = await http.post(
-        Uri.parse('$URL/login'),
+        Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(logindata.toJson()),
       );
@@ -41,13 +41,41 @@ class LoginService {
   }
 
   static Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('token');
+    } catch (e) {
+      return null;
+    }
   }
 
   static Future<void> logout() async {
+    try {
+      await _clearToken();
+      
+      final String? token = await getToken();
+      if (token != null && token.isNotEmpty) {
+        try {
+          await http.post(
+            Uri.parse('$baseUrl/logout'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          ).timeout(Duration(seconds: 5));
+        } catch (e) {
+        }
+      }
+    } catch (e) {
+      await _clearToken();
+    }
+  }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token');
+  static Future<void> _clearToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('token');
+    } catch (e) {
+    }
   }
 }

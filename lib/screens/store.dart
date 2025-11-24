@@ -226,6 +226,94 @@ class _StorePageState extends State<StorePage> {
     );
   }
 
+  void _showDeleteStoreConfirmation() {
+    if (_store == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Hapus Toko'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Yakin ingin menghapus toko "${_store!.namaToko}"?'),
+            SizedBox(height: 8),
+            Text(
+              'Tindakan ini akan:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 4),
+            Text('• Menghapus semua data toko'),
+            Text('• Menghapus semua produk yang terkait'),
+            Text('• Tidak dapat dikembalikan'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deleteStore();
+            },
+            child: Text(
+              'Hapus Toko',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteStore() async {
+    if (_store == null) return;
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('Menghapus toko...'),
+          ],
+        ),
+      ),
+    );
+
+    final result = await StoreService.deleteStore(_store!.idToko);
+
+    // Close loading
+    if (mounted) Navigator.pop(context);
+
+    if (mounted) {
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Toko berhasil dihapus'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Kembali ke halaman sebelumnya
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menghapus toko: ${result['message']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -242,9 +330,34 @@ class _StorePageState extends State<StorePage> {
             },
           ),
           if (_store != null)
-            IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: _showEditStoreDialog,
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert),
+              onSelected: (value) {
+                if (value == 'edit') _showEditStoreDialog();
+                if (value == 'delete') _showDeleteStoreConfirmation();
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 20),
+                      SizedBox(width: 8),
+                      Text('Edit Toko'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, size: 20, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Hapus Toko', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
             ),
         ],
       ),
@@ -537,7 +650,12 @@ class _StorePageState extends State<StorePage> {
               _showEditStoreDialog,
             ),
             SizedBox(height: 12),
-          
+            _buildActionButton(
+              'Hapus Toko',
+              Icons.delete,
+              Colors.red,
+              _showDeleteStoreConfirmation,
+            ),
           ],
         ),
       ],
