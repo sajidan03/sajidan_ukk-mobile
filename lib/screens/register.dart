@@ -18,7 +18,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _kontakController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
+  final Color primaryColor = const Color(0xFF3d3d7e);
   bool _isLoading = false;
   bool _obscurePassword = true;
 
@@ -105,7 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade700,
+        backgroundColor: primaryColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -124,7 +124,7 @@ class _RegisterPageState extends State<RegisterPage> {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Colors.blue,
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 8),
@@ -261,7 +261,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       : ElevatedButton(
                           onPressed: _register,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue.shade700,
+                            backgroundColor: primaryColor,
                             foregroundColor: Colors.white,
                             elevation: 2,
                             shape: RoundedRectangleBorder(
